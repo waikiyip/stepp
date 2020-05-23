@@ -1,0 +1,58 @@
+# Import all packages listed as Imports or Depends
+
+useDynLib(stepp, .registration=TRUE)
+
+import(
+  methods,
+  car,
+  survival,
+  splines,
+  grDevices,
+  graphics,
+  stats,
+  utils
+)
+
+importFrom(grDevices, bmp, dev.list, dev.new, dev.off,
+           dev.set, graphics.off, jpeg, pdf, png,
+           postscript, tiff)
+importFrom(graphics, axis, legend, lines, mtext, par,
+           points)
+importFrom(stats, as.formula, binomial, coef, cov,
+           gaussian, median, na.omit, pchisq, poisson,
+           predict, qnorm, var, vcov)
+importFrom(utils, setTxtProgressBar, txtProgressBar)
+
+export(	stepp,
+	stepp.rnote,
+       	stepp_summary,
+       	stepp_print,
+       	stepp_plot,
+	analyze.KM.stepp,
+	analyze.CumInc.stepp,
+	summary,
+	print,
+	plot,
+	generate,
+	estimate,
+	test,
+	stepp.win,
+	stepp.subpop,
+	stepp.KM,
+	stepp.CI,
+	stepp.GLM,
+	stepp.test,
+	stepp.edge,
+	gen.tailwin
+)
+
+
+exportClass(
+	stwin,
+	stsubpop,
+	stmodelKM,
+	stmodelCI,
+	stmodelGLM,
+	stmodel,
+	steppes
+)
