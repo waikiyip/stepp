@@ -6,16 +6,20 @@
 	specified stepp window and covariate of interest
 }
 \description{
-  This is the constructor function to create a stepp subpopulation object.  In addition, 
+  This is the constructor function to create a stepp subpopulation object. In addition, 
   it will also generate the stepp subpopulations based on the stepp window and covariate specified.
 }
 \usage{
-stepp.subpop(swin, cov)
+stepp.subpop(swin, cov, coltype, coltrt, trts, minsubpops)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{swin}{the stepp window set up for the analysis}
   \item{cov}{the covariate of interest}
+  \item{coltype}{variable providing the event type; required only for event-based windows}
+  \item{coltrt}{variable providing the treatment indicators; required only for event-based windows}
+  \item{trts}{vector containing the treatments list; required only for event-based windows}
+  \item{minsubpops}{length-one numeric vector providing the minimum number of subpopulations to generate; required only for event-based windows}
 }
 
 \value{
@@ -45,8 +49,20 @@ Y <- rnorm(100)
 # create and generate the stepp subpopulation
 sp   <- stepp.subpop(swin=win1, cov=Y)
 
+# event-based windows using the BIG data set
+data(bigKM)
+rxgroup <- bigKM$trt
+time    <- bigKM$time
+evt     <- bigKM$event
+cov     <- bigKM$ki67
+
+swin_e <- new("stwin", type = "sliding_events", e1 = 10, e2 = 20)
+subp_e <- new("stsubpop")
+subp_e <- generate(subp_e, win = swin_e, covariate = cov, coltype = evt,
+                   coltrt = rxgroup, trts = c(1, 2), minsubpops = 5)
+summary(subp_e)
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
-\keyword{ ~kwd1 }
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+\keyword{ ~subpopulation }
+\keyword{ ~stepp }% __ONLY ONE__ keyword per line

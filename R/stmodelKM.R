@@ -6,8 +6,7 @@
 # stepp model: KM     #
 #######################
 #
-kmest1<-function(y,m,n,ndf,t,s,v,ntpt,tpt,nrr,ndd)
-{
+kmest1 <- function(y,m,n,ndf,t,s,v,ntpt,tpt,nrr,ndd) {
   # initialization 
   f<-1.0
   kr<-n
@@ -81,9 +80,7 @@ kmest1<-function(y,m,n,ndf,t,s,v,ntpt,tpt,nrr,ndd)
 }
 
 
-kmest <-
-function (time,status,group,tpt,pv=TRUE,pv.strat,pv.sub,rho=0,subset,na.action=na.omit) 
-{
+kmest <- function (time,status,group,tpt,pv=TRUE,pv.strat,pv.sub,rho=0,subset,na.action=na.omit) {
   d <- data.frame(time=time,status=status,
     group=as.factor(if (missing(group)) rep(1,length(time)) else group),
     pv.strat=as.factor(if (missing(pv.strat)) rep(1,length(time)) else pv.strat),
@@ -142,8 +139,7 @@ function (time,status,group,tpt,pv=TRUE,pv.strat,pv.sub,rho=0,subset,na.action=n
 }
 
 #
-tpest1<-function(x,n,ind,tp5,ntp)
-{
+tpest1 <- function(x,n,ind,tp5,ntp) {
   l <- ntp
   for (i in rev(1:ntp)){
     if (x[n] >= tp5[i]) break;
@@ -182,9 +178,7 @@ tpest1<-function(x,n,ind,tp5,ntp)
 }
 
 
-tpest <-
-function(w,times) 
-{
+tpest <- function(w,times) {
   if (!is.null(w$Tests)) w <- w[names(w) != 'Tests']
   ng <- length(w)
   times <- sort(unique(times))
@@ -211,18 +205,19 @@ function(w,times)
 }
 
 setClass("stmodelKM",
-	   representation(coltrt   = "numeric",	# treatment
-				survTime = "numeric",   # time to event
-				censor   = "numeric",	# time to censor
-				trts     = "numeric",	# trt encoding
-				timePoint= "numeric"	# evaluated time
-				)
-	   )
+  representation(
+    coltrt    = "numeric",	# treatment
+    survTime  = "numeric",  # time to event
+    censor    = "numeric",	# time to censor
+    trts      = "numeric",	# trt encoding
+    timePoint = "numeric"	  # evaluated time
+  )
+)
 
 setMethod("estimate",	
-	    signature="stmodelKM",
-	    definition=function(.Object, sp, ...){
-
+  signature = "stmodelKM",
+  definition = function(.Object, sp, ...) {
+    modtype   <- sp@win@type
 		nsubpop   <- sp@nsubpop
 		subpop    <- sp@subpop
 		coltrt    <- .Object@coltrt
@@ -320,10 +315,9 @@ setMethod("estimate",
 	    }
 )
 
-
 setMethod("test",
-	    signature="stmodelKM",
-	    definition=function(.Object, nperm=2500, sp, effect, showstatus=TRUE, Cox=FALSE, MM=NULL, ...){
+  signature = "stmodelKM",
+  definition = function(.Object, nperm=2500, sp, effect, showstatus=TRUE, Cox=FALSE, MM=NULL, ...) {
 
 		test <- NULL
 
@@ -378,8 +372,8 @@ setMethod("test",
 		    }
 
 		    if (showstatus){
-		      title <- paste("\nComputing the pvalue with ", nperm)
-		      title <- paste(title, "number of permutations comparing trt",trts[j],"with trt ",trts[1],"\n")
+		      title <- paste("\nComputing the p-value with", nperm)
+		      title <- paste(title, "number of permutations comparing trt", trts[j], "with trt", trts[1], "\n")
 		      cat(title)
 	  	      pb    <- txtProgressBar(min=0, max=nperm-1, style=3)
 		    }
@@ -462,7 +456,7 @@ setMethod("test",
         		  stop()
       	      }
 		    }
-	          # generating the sigmas and pvalues
+	          # generating the sigmas and p-values
 		    sObs   <- effect$TrtEff[[1]]$sObs-effect$TrtEff[[j]]$sObs
 		    oObs   <- effect$TrtEff[[1]]$oObs-effect$TrtEff[[j]]$oObs
 		    logHR  <- effect$Ratios[[j-1]]$logHR
@@ -507,8 +501,7 @@ setMethod("test",
 #
 # printing support functions for KM model
 #
-print.estimate.KM <- function(x, timePoint, trts){
-
+print.estimate.KM <- function(x, timePoint, trts) {
 	for (j in 1:x@effect$ntrts){
 		cat("\n")
       	write(paste("Survival estimates for treatment group", trts[j], 
@@ -605,7 +598,7 @@ print.estimate.KM <- function(x, timePoint, trts){
 	}
 }
 
-print.cov.KM <- function(stobj, timePoint, trts){
+print.cov.KM <- function(stobj, timePoint, trts) {
     if (!is.null(stobj@result)) {
 	for (j in 1:(stobj@result$ntrts-1)){
 	  ns <- stobj@subpop@nsubpop
@@ -637,27 +630,27 @@ print.cov.KM <- function(stobj, timePoint, trts){
     }
 }
 
-print.stat.KM <- function(stobj, trts){
+print.stat.KM <- function(stobj, trts) {
     if (!is.null(stobj@result)) {
 	for (j in 1:(stobj@result$ntrts-1)){
 
  	  t <- stobj@result$Res[[j]]
 	  cat("\n")
         write(paste("Supremum test results"), file = "")
-	  write(paste("trt ", trts[j+1], "vs. trt ", trts[1]), file = "")
-     	  write(paste("Interaction P-value based on Kaplan-Meier estimates :", t$pvalue), file = "")
-	  write(paste("Interaction P-value based on hazard ratio estimates :", t$HRpvalue), file = "")
+	  write(paste("trt", trts[j + 1], "vs. trt", trts[1]), file = "")
+     	  write(paste("Interaction p-value based on Kaplan-Meier estimates:", t$pvalue), file = "")
+	  write(paste("Interaction p-value based on hazard ratio estimates:", t$HRpvalue), file = "")
 
 	  cat("\n")
         write(paste("Chi-square test results"), file = "")
-        write(paste("Interaction P-value based on Kaplan-Meier estimates :", 
+        write(paste("Interaction p-value based on Kaplan-Meier estimates:", 
      	        t$chi2pvalue), file = "")
 
 	  #cat("\n")
         #write(paste("Homogeneous association test results"), file = "")
-        #write(paste("Interaction P-value based on Kaplan-Meier estimates :", 
+        #write(paste("Interaction p-value based on Kaplan-Meier estimates:", 
         #	hapvalue), file = "")
-        #write(paste("Interaction P-value based on hazard ratio estimates :", 
+        #write(paste("Interaction p-value based on hazard ratio estimates:", 
         #	haHRpvalue), file = "")
 
 	  cat("\n")
@@ -666,8 +659,8 @@ print.stat.KM <- function(stobj, trts){
 }
 
 setMethod("print",
-	    signature="stmodelKM",
-	    definition=function(x, stobj, estimate=TRUE, cov=TRUE, test=TRUE, ...){
+  signature=  "stmodelKM",
+  definition=  function(x, stobj, estimate=TRUE, cov=TRUE, test=TRUE, ...) {
 
 		#
 		#  1. estimates
@@ -698,4 +691,3 @@ stepp.KM <- function(coltrt, survTime, censor, trts, timePoint){
 			trts=trts, timePoint=timePoint)
 	return(model)
 }
-
