@@ -64,8 +64,3 @@ smodel  <- stepp.CI(coltrt=rxgroup, trts=c(1,2), coltime=time, coltype=evt, time
 statCI  <- stepp.test(subpop=subp, model=smodel, nperm=0)
 
 }
-% Add one or more standard keywords, see file 'KEYWORDS' in the
-% R documentation directory.
-\keyword{ ~kwd1 }
-\keyword{ ~kwd2 }% __ONLY ONE__ Keyword per line
-

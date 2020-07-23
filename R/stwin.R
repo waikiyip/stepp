@@ -78,7 +78,7 @@ setMethod("summary", signature = "stwin",
 )
 
 # constructor function for stepp window
-stepp.win <- function(type, r1, r2, e1, e2, basedon = "all") {
+stepp.win <- function(type = "sliding", r1 = 5, r2 = 20, e1 = NULL, e2 = NULL, basedon = "all") {
 	if (type == "tail-oriented"){
 	  r1 <- unique(sort(c(r1)))
 	  r2 <- unique(sort(c(r2)))
