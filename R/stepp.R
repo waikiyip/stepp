@@ -105,8 +105,8 @@ analyze.CumInc.stepp <- function(coltrt, coltime, coltype, colvar, trts, patspop
 # Release notes for STEPP
 #
 stepp.rnote <- function() {
-  cat("Release Note for STEPP version 3.2-0 (May 1, 2018)")
-  cat("\nThis version of the STEPP package contains major additions.  Some of the features have some limitations.")
+  cat("Release Note for STEPP version 3.2-1 (July 27, 2020)")
+  cat("\nThis version of the STEPP package contains major additions. Some of the features have some limitations.")
 
   cat("\n1. Multiple comparisons up to 8 groups (arms) - The user can specify up to 8 treatment groups in one STEPP")
   cat("\n   analysis. Treatment 0 is the baseline and all other treatments will be compared against the ")
