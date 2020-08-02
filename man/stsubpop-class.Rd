@@ -1,5 +1,5 @@
 \name{stsubpop-class}
-\Rdversion{1.1}
+\Rdversion{1.3}
 \docType{class}
 \alias{stsubpop-class}
 \alias{generate,stsubpop-method}
@@ -8,11 +8,10 @@
 \title{Class \code{"stsubpop"}}
 \description{
 	This is the S4 class for stepp subpopulation object.  The subpopulations are generated
-        based on the stepp windows and the covariate of interest.
+  based on the stepp windows and the covariate of interest.
 }
 \section{Objects from the Class}{
-Objects can be created by calls of the form \code{new("stsubpop") or the constructor method stepp.subpop}.
-%%  ~~ describe objects here ~~ 
+Objects can be created by calls of the form \code{new("stsubpop")} or the constructor method stepp.subpop.
 }
 \section{Slots}{
   \describe{
@@ -36,14 +35,18 @@ Objects can be created by calls of the form \code{new("stsubpop") or the constru
 	a vector of rounded maximum value of the covariate of interest for each subpopulation }
     \item{\code{maxc}:}{Object of class \code{"numeric"} \cr
 	a vector of the maximum value of the covariate of interest for each subpopulation }
+    \item{\code{neventsubTrt0}:}{Object of class \code{"numeric"} or \code{NULL} \cr
+  a vector containing the number of events in each subpopulation for the baseline treatment group}
+    \item{\code{neventsubTrt1}:}{Object of class \code{"numeric"} or \code{NULL} \cr
+  a vector containing the number of events in each subpopulation for the active treatment group}
     \item{\code{init}:}{Object of class \code{"logical"} \cr
-	a logical value indicating if the subpopulations are generated or not }
+	a logical value indicating if the subpopulations have already been generated or not }
   }
 }
 \section{Methods}{
   \describe{
-    \item{generate}{\code{signature(.Object = "stsubpop", win, covariate)}: \cr
-	a method to generate the subpopulations based on the stepp window object and the specified covariate of interest }
+    \item{generate}{\code{signature(.Object = "stsubpop", win, covariate, coltype, coltrt, trts, minsubpops)}: \cr
+	a method to generate the subpopulations based on the stepp window object and the specified covariate of interest. For event-based windows, also the event type (\code{coltype}), treatment indicator (\code{coltrt}), treatments list (\code{trts}) and minimum number of subpopulations (\code{minsubpops}) must be provided }
     \item{summary}{\code{signature(.Object = "stsubpop")}: \cr
 	a method to display the summary of the subpopulations generated }
 	 }
@@ -76,5 +79,17 @@ sp <- new("stsubpop")
 sp <- generate(sp, win=win1, cov=Y)
 summary(sp)
 
+# event-based windows using the BIG data set
+data(bigKM)
+rxgroup <- bigKM$trt
+time    <- bigKM$time
+evt     <- bigKM$event
+cov     <- bigKM$ki67
+
+swin_e <- new("stwin", type = "sliding_events", e1 = 10, e2 = 20)
+subp_e <- new("stsubpop")
+subp_e <- generate(subp_e, win = swin_e, covariate = cov, coltype = evt,
+                   coltrt = rxgroup, trts = c(1, 2), minsubpops = 5)
+summary(subp_e)
 }
 \keyword{classes}

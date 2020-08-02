@@ -1,14 +1,24 @@
 Package: stepp
 Type: Package
 Title: Subpopulation Treatment Effect Pattern Plot (STEPP)
-Version: 3.2.0.1
-Date: 2020-05-25
-Author: Wai-ki Yip, with contributions from
-        Ann Lazar, David Zahrieh, Chip Cole, Ann Lazar, Marco Bonetti,
-        Victoria Wang, William Barcella and Richard Gelber
-Maintainer: Wai-ki Yip <yuser86@yahoo.com>
+Version: 3.2.1.1
+Date: 2020-07-25
+Author: Wai-ki Yip [aut, cre],
+    Ann Lazar [ctb],
+    David Zahrieh [ctb],
+    Chip Cole [ctb],
+    Ann Lazar [ctb],
+    Marco Bonetti [ctb],
+    Victoria Wang [ctb],
+    William Barcella [ctb],
+    Sergio Venturini [ctb, cre]
+    Richard Gelber [ctb]
+Maintainer: Wai-ki Yip <yuser86@yahoo.com>,
+    Sergio Venturini <sergio.venturini@unito.it> 
+Imports: rstudioapi
 Depends: methods, car, survival, splines
 Collate: 
+  'zzz.R'
 	'stutil.R'
 	'stwin.R'
 	'stsubpop.R'

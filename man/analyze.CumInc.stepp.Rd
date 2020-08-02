@@ -180,8 +180,3 @@ analyze.CumInc.stepp (coltrt=Txassign, trts=c(0,1), coltime=time, coltype=type, 
   xlabel="Subpopulations by Median Age",ylabel="4-year Cancer Relapse",
   tlegend=c("Treatment A", "Treatment B"), nlas=3,pointwise=FALSE)
 }
-
-% Add one or more standard keywords, see file 'KEYWORDS' in the
-% R documentation directory.
-\keyword{ ~kwd1 }
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line

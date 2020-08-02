@@ -95,7 +95,3 @@ type[(t2 < t0)&(t2 < t1)] <- 2
 x <- stepp.CI(coltrt=Txassign, trts=c(0,1), coltime=time, coltype=type, timePoint=1.0)
 
 }
-% Add one or more standard keywords, see file 'KEYWORDS' in the
-% R documentation directory.
-\keyword{ ~kwd1 }
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line

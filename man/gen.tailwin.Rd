@@ -34,9 +34,3 @@
 \seealso{
   \code{\linkS4class{stwin}},  \code{\link{stepp.win}} 
 }
-
-
-% Add one or more standard keywords, see file 'KEYWORDS' in the
-% R documentation directory.
-\keyword{ ~kwd1 }
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line

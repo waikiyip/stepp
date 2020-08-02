@@ -170,8 +170,3 @@ stepp_plot(steppCI,
   xlabel="Subpopulations by Median Age",ylabel="4-year Cancer Relapse",
   tlegend=c("Treatment A", "Treatment B"), nlas=3,pointwise=FALSE)
 }
-
-% Add one or more standard keywords, see file 'KEYWORDS' in the
-% R documentation directory.
-\keyword{ ~kwd1 }
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line

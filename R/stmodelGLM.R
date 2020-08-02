@@ -28,13 +28,17 @@ setClass("stmodelGLM",
 setMethod("estimate",	
 	    signature="stmodelGLM",
 	    definition=function(.Object, sp, ...){
-		nsubpop   <- sp@nsubpop
+		modtype   <- sp@win@type
+    if (modtype == "sliding_events") {
+      stop("The sliding_events window type can be used only with the stmodelCI interface.")
+    }
+    nsubpop   <- sp@nsubpop
 		subpop    <- sp@subpop
 		coltrt    <- .Object@coltrt
 		trts	    <- .Object@trts
 		OuTcOmE   <- .Object@colY
 		covariate <- .Object@MM
-		glm	    <- .Object@glm
+		glm	      <- .Object@glm
 		link	    <- .Object@link
 		debug	    <- .Object@debug != 0
 
@@ -316,8 +320,8 @@ setMethod("test",
 		    fmla <- as.formula("OuTcOmE ~ txassign")
 		  }
 	  	  if (showstatus){
-		    title <- paste("\nComputing the pvalue with ", nperm)
-		    title <- paste(title, "permutations comparing trt",trts[j],"with trt ",trts[1],"\n")
+		    title <- paste("\nComputing the p-value with", nperm)
+		    title <- paste(title, "permutations comparing trt", trts[j], "with trt", trts[1], "\n")
 		    cat(title)
 	  	    pb <- txtProgressBar(min=0, max=nperm-1, style=3)
 		  }
@@ -487,7 +491,7 @@ setMethod("test",
 		}
 	      if (showstatus) close(pb)
 
-	      # generating the sigmas and pvalues
+	      # generating the sigmas and p-values
 		sObs   <- effect$TrtEff[[1]]$sObs-effect$TrtEff[[j]]$sObs
 		oObs   <- effect$TrtEff[[1]]$oObs-effect$TrtEff[[j]]$oObs
 		logHR  <- effect$Ratios[[j-1]]$logHR
@@ -885,18 +889,17 @@ print.stat.GLM <- function(stobj, trts){
 	  t <- stobj@result$Res[[j]]
 	  cat("\n")
         write(paste("Supremum test results"), file = "")
-	  write(paste("trt ", trts[j+1], "vs. trt ", trts[1]), file = "")
+	  write(paste("trt ", trts[j + 1], "vs. trt", trts[1]), file = "")
 
-	  write(paste("Interaction P-value based on effect differences estimates :", t$pvalue), file = "")
+	  write(paste("Interaction p-value based on effect differences estimates:", t$pvalue), file = "")
         cat("\n")
-	  write(paste("Chisquare interaction P-value based on effect differences estimates :", t$chi2pvalue), file = "")
+	  write(paste("Chi-square Interaction p-value based on effect differences estimates:", t$chi2pvalue), file = "")
 
 	  cat("\n")
 	}
     }
 
 }
-
 
 setMethod("print",
 	    signature="stmodelGLM",
