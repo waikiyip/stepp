@@ -121,13 +121,10 @@ balance_patients <- function(range_r1, range_r2, maxnsubpops, covar, verbose = F
     cat(paste("Range for number of patients in common in consecutive subpopulations (r1):", range_r1[1], "<-->", range_r1[2], "\n"))
     cat(paste("Range for number of patients per subpopulation (r2):", range_r2[1], "<-->", range_r2[2]), "\n")
     cat("\n")
-  }
-  
-  for (i in 1:maxnsubpops) {
-    if (!is.na(bestr1[i])) {
-      soln <- c(bestr1[i], bestr2[i], minvars[i])
-      best <- unbalance(bestr1[i], bestr2[i], maxnsubpops, freqdist, allfreqs)
-      if (verbose) {
+
+    for (i in 1:maxnsubpops) {
+      if (!is.na(bestr1[i])) {
+        best <- unbalance(bestr1[i], bestr2[i], maxnsubpops, freqdist, allfreqs)
         cat(paste("Best result for", i, "subpopulations\n"))
         cat("  * Optimal r1 value:", bestr1[i], "\n")
         cat("  * Optimal r2 value:", bestr2[i], "\n")
@@ -154,8 +151,7 @@ balance_patients <- function(range_r1, range_r2, maxnsubpops, covar, verbose = F
         cat("\n")
       }
     }
-  }
-  if (verbose) {
+
     cat(paste("Overall best result\n"))
     cat(paste("  * Number of subpopulations:", indbest, "\n"))
     cat(paste("  * Best r1 value:", r1best, "\n"))
