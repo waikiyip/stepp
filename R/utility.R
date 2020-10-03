@@ -159,16 +159,16 @@ balance_patients <- function(range_r1, range_r2, maxnsubpops, covar, verbose = F
     cat(paste("  * Minimum variance of subpopulation sizes achieved:", round(varbest, digits = 4), "\n"))
   }
 
-  # Add the shade of gray to the last column: darker means smaller variance.
-  # It works on the log scale to highlight best results only (darker).
-  # There are 8 (i.e. nlogvar - 1) shades of color from 0/8 to 7/8 (8/8 is white).
-  nlogvar <- 9
-  logvar <- log(resmat[, 3])
-  cutoffs <- seq(min(logvar), max(logvar), length.out = nlogvar)
-  resmat[, 5] <- sapply(as.list(logvar),
-    function(x) (sum(cutoffs <= x) - 1)/(nlogvar - 1))
-
   if (plot) {
+    # Add the shade of color to the last column: darker means smaller variance.
+    # It works on the log scale to highlight best results only (darker).
+    # There are 8 (i.e. nlogvar - 1) shades of color from 0/8 to 7/8 (8/8 is white).
+    nlogvar <- 9
+    logvar <- log(resmat[, 3])
+    cutoffs <- seq(min(logvar), max(logvar), length.out = nlogvar)
+    resmat[, 5] <- sapply(as.list(logvar),
+      function(x) (sum(cutoffs <= x) - 1)/(nlogvar - 1))
+
     if (diff(range(range_r1)) >= 10 && diff(range(range_r2)) >= 10) {
       def.par <- par(no.readonly = TRUE)
       nf <- graphics::layout(c(1, 2), heights = c(10, 2))
