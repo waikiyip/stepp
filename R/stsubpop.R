@@ -92,7 +92,6 @@ generate.all <- function(sp, win, covariate, coltype = NULL, coltrt = NULL, trts
     absfreq <- as.numeric(table(covariate))
     cumfreq <- cumsum(absfreq)
     #
-    #
     # Create vector of number of Type 1's recorded for each covariate
     # value for each treatment type
     # 
@@ -177,7 +176,7 @@ generate.all <- function(sp, win, covariate, coltype = NULL, coltrt = NULL, trts
       # increment total number of subpopulations for next loop iteration
       nsubpop <- nsubpop + 1
     }
-    #decrement nsubpop to number of found subpopulations
+    # decrement nsubpop to number of found subpopulations
     nsubpop <- nsubpop - 1
 
     #
@@ -348,11 +347,11 @@ setMethod("merge",
       }
 
       subp.new@win     <- .Object@win
-      subp.new@colvar    <- .Object@colvar
-      subp.new@nsubpop   <- nsubpop.new
-      subp.new@npatsub   <- apply(subpop.matrix,2,sum)
-      subp.new@subpop    <- subpop.matrix
-      subp.new@medianz   <- medianz
+      subp.new@colvar  <- .Object@colvar
+      subp.new@nsubpop <- nsubpop.new
+      subp.new@npatsub <- apply(subpop.matrix,2,sum)
+      subp.new@subpop  <- subpop.matrix
+      subp.new@medianz <- medianz
       subp.new@minz    <- minz
       subp.new@minc    <- minc
       subp.new@maxz    <- maxz
@@ -404,12 +403,12 @@ setMethod("edge",
     maxz    <- rep(0, n)
     maxc    <- rep(0, n)
 
-    #print(paste(side, "j=",j, "start=",start, "n=",n,ZU[start], ZU[start+n-1]))
-    #print(ZU)
+    # print(paste(side, "j=",j, "start=",start, "n=",n,ZU[start], ZU[start+n-1]))
+    # print(ZU)
     
     for (i in 1:n) {
-      #print(c(i, ZU[start+i-1], ZU[start+i+n-1]))
-      subpop.matrix[,i] <- (covariate >= ZU[start+i-1]) * (covariate <= ZU[start+i+n-2])
+      # print(c(i, ZU[start + i - 1], ZU[start + i + n - 1]))
+      subpop.matrix[,i ] <- (covariate >= ZU[start + i - 1]) * (covariate <= ZU[start + i+n - 2])
 
       subpop.cov <- covariate[subpop.matrix[, i] == 1]
       medianz[i] <- round((median(subpop.cov)), digits = 2)
@@ -419,13 +418,13 @@ setMethod("edge",
       maxz[i]    <- round(maxc[i],digits=4)
     }
 
-    subp.new       <- new("stsubpop")   
+    subp.new         <- new("stsubpop")
     subp.new@win     <- .Object@win
-    subp.new@colvar      <- .Object@colvar
-    subp.new@nsubpop     <- n
-    subp.new@subpop    <- subpop.matrix
-    subp.new@npatsub     <- apply(subpop.matrix,2,sum)
-    subp.new@medianz     <- medianz
+    subp.new@colvar  <- .Object@colvar
+    subp.new@nsubpop <- n
+    subp.new@subpop  <- subpop.matrix
+    subp.new@npatsub <- apply(subpop.matrix,2,sum)
+    subp.new@medianz <- medianz
     subp.new@minz    <- minz
     subp.new@minc    <- minc
     subp.new@maxz    <- maxz
@@ -464,7 +463,7 @@ setMethod("summary",
         write("Subpopulation summary information (including all treatments)", file = "")
         nper <- apply(object@subpop, 2 ,sum)
         temp <- matrix(c(1:object@nsubpop, object@medianz, object@minz, object@maxz, nper), ncol = 5)
-        write("                                  Covariate Summary                  Sample", file = "")
+        write("                                  Covariate Summary                 Sample", file = "")
         write("     Subpopulation        Median       Minimum       Maximum          size", file = "")
         for (i in 1:object@nsubpop) {
           if (object@win@type == "tail-oriented" & i == length(object@win@r1) + 1) {
