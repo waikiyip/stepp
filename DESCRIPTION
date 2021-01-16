@@ -15,7 +15,7 @@ Author: Wai-ki Yip [aut, cre],
     Richard Gelber [ctb]
 Maintainer: Wai-ki Yip <yuser86@yahoo.com>,
     Sergio Venturini <sergio.venturini@unito.it> 
-Imports: rstudioapi
+Imports: rstudioapi, scales
 Depends: methods, car, survival, splines
 Collate: 
   'zzz.R'
