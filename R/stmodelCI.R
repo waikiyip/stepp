@@ -17,7 +17,7 @@ cuminc.HR <- function (ftime, fstatus, group, strata, rho = 0, cencode = 0,
     tmp <- nrow(d)
     d <- na.action(d)
     if (nrow(d) != tmp) 
-        cat(format(tmp - nrow(d)), "cases omitted due to missing values\n")
+      cat(format(tmp - nrow(d)), "cases omitted due to missing values\n")
     no <- nrow(d)
     cg <- "  "
     nst <- length(levels(d$strata))
@@ -104,6 +104,43 @@ setClass("stmodelCI",
   )
 )
 
+setMethod("initialize", "stmodelCI",
+  function(.Object, coltrt, coltime, coltype, trts, timePoint, ...) {
+    if (missing(coltime)) {
+      coltime <- numeric()
+    }
+    if (missing(coltype)) {
+      coltype <- numeric()
+    }
+    if (missing(timePoint)) {
+      timePoint <- 1
+    }
+    if (missing(coltrt)) {
+      coltrt <- rep(1, length(coltime))
+    }
+    if (missing(trts)) {
+      trts <- 1
+    }
+    .Object@coltrt <- coltrt
+    .Object@coltime <- coltime
+    .Object@coltype <- coltype
+    .Object@trts <- trts
+    .Object@timePoint <- timePoint
+    if (!validObject(.Object)) stop("")
+    callNextMethod(.Object, ...)
+  }
+)
+
+setValidity("stmodelCI", 
+  function(object) {
+    status <- TRUE
+
+    # add conditions to verify
+
+    return(status)
+  }
+)
+
 setMethod("estimate",
   signature = "stmodelCI",
   definition = function(.Object, sp, ...) {
@@ -133,10 +170,62 @@ setMethod("estimate",
     Ratios <- array(list(HRs), ntrts - 1)
 
     # estimate the abs and rel trt effects comparing trt 1 with trt j
-    for (j in 2:ntrts) {
+    if (ntrts > 1) {
+      for (j in 2:ntrts) {
+        txassign <- rep(-1, length(coltrt))
+        txassign[which(coltrt == trts[1])] <- 1
+        txassign[which(coltrt == trts[j])] <- 0
+
+        sel <- (txassign == 1 | txassign == 0)
+
+        # for each subgroup i
+        for (i in 1:nsubpop) {
+          result <- cuminc.HR(survTime[subpop[,i]==1& !(txassign==-1)],
+          type[subpop[,i]==1& !(txassign==-1)],txassign[subpop[,i]==1 & !(txassign==-1)])
+          if (max(result$"1 1"$time) >= timePoint) {
+            index           <- sum(result$"1 1"$time <= timePoint)
+            TrtEff[[1]]$sObs[i]  <- result$"1 1"$est[index]
+            TrtEff[[1]]$sSE[i]   <- sqrt(result$"1 1"$var[index])
+          }
+          if (max(result$"0 1"$time) >= timePoint) {
+            index           <- sum(result$"0 1"$time <= timePoint)
+            TrtEff[[j]]$sObs[i]  <- result$"0 1"$est[index]
+            TrtEff[[j]]$sSE[i]   <- sqrt(result$"0 1"$var[index])
+          }
+          Ratios[[j - 1]]$logHR[i]   <- result$ome/result$omevar
+          Ratios[[j - 1]]$logHRSE[i] <- sqrt(1/result$omevar)
+        }
+        Ratios[[j - 1]]$logHRw <- sum(Ratios[[j - 1]]$logHR/Ratios[[j - 1]]$logHRSE)
+        Ratios[[j - 1]]$skmw   <- sum((TrtEff[[1]]$sObs-TrtEff[[j]]$sObs)/sqrt(TrtEff[[1]]$sSE^2 + TrtEff[[j]]$sSE^2))
+
+        # estimate the overall effect
+        result <- cuminc.HR(survTime[sel],type[sel],txassign[sel])
+        if (max(result$"1 1"$time) >= timePoint) {
+          index <- length(result$"1 1"$time[result$"1 1"$time <= timePoint])
+          TrtEff[[1]]$oObs <- result$"1 1"$est[index]
+          TrtEff[[1]]$oSE  <- sqrt(result$"1 1"$var[index])
+        }
+        if (max(result$"0 1"$time) >= timePoint) {
+          index <- sum(result$"0 1"$time <= timePoint)
+          TrtEff[[j]]$oObs <- result$"0 1"$est[index]
+          TrtEff[[j]]$oSE  <- sqrt(result$"0 1"$var[index])
+        }
+        Ratios[[j - 1]]$oLogHR   <- result$ome/result$omevar
+        Ratios[[j - 1]]$oLogHRSE <- sqrt(1/result$omevar)
+        if (sum(is.na(TrtEff[[1]]$sObs)) != 0 | sum(is.na(TrtEff[[j]]$sObs)) != 0 | 
+              is.na(TrtEff[[1]]$oObs) != FALSE | is.na(TrtEff[[j]]$oObs) != FALSE) {
+          cat("\n")
+          print(paste("Unable to estimate survival time at ", timePoint, 
+          " time-unit(s) because there are too few events within one or more subpopulation(s)."))
+          print(paste("The problem may be avoided by constructing larger subpopulations and/or by selecting a different timepoint for estimation."))
+          stop()
+        }
+      }
+    }
+
+    if (ntrts == 1) {
       txassign <- rep(-1, length(coltrt))
       txassign[which(coltrt == trts[1])] <- 1
-      txassign[which(coltrt == trts[j])] <- 0
 
       sel <- (txassign == 1 | txassign == 0)
 
@@ -149,16 +238,7 @@ setMethod("estimate",
           TrtEff[[1]]$sObs[i]  <- result$"1 1"$est[index]
           TrtEff[[1]]$sSE[i]   <- sqrt(result$"1 1"$var[index])
         }
-        if (max(result$"0 1"$time) >= timePoint) {
-          index           <- sum(result$"0 1"$time <= timePoint)
-          TrtEff[[j]]$sObs[i]  <- result$"0 1"$est[index]
-          TrtEff[[j]]$sSE[i]   <- sqrt(result$"0 1"$var[index])
-        }
-        Ratios[[j - 1]]$logHR[i]   <- result$ome/result$omevar
-        Ratios[[j - 1]]$logHRSE[i] <- sqrt(1/result$omevar)
       }
-      Ratios[[j - 1]]$logHRw <- sum(Ratios[[j - 1]]$logHR/Ratios[[j - 1]]$logHRSE)
-      Ratios[[j - 1]]$skmw   <- sum((TrtEff[[1]]$sObs-TrtEff[[j]]$sObs)/sqrt(TrtEff[[1]]$sSE^2 + TrtEff[[j]]$sSE^2))
 
       # estimate the overall effect
       result <- cuminc.HR(survTime[sel],type[sel],txassign[sel])
@@ -167,15 +247,7 @@ setMethod("estimate",
         TrtEff[[1]]$oObs <- result$"1 1"$est[index]
         TrtEff[[1]]$oSE  <- sqrt(result$"1 1"$var[index])
       }
-      if (max(result$"0 1"$time) >= timePoint) {
-        index <- sum(result$"0 1"$time <= timePoint)
-        TrtEff[[j]]$oObs <- result$"0 1"$est[index]
-        TrtEff[[j]]$oSE  <- sqrt(result$"0 1"$var[index])
-      }
-      Ratios[[j - 1]]$oLogHR   <- result$ome/result$omevar
-      Ratios[[j - 1]]$oLogHRSE <- sqrt(1/result$omevar)
-      if (sum(is.na(TrtEff[[1]]$sObs)) != 0 | sum(is.na(TrtEff[[j]]$sObs)) != 0 | 
-            is.na(TrtEff[[1]]$oObs) != FALSE | is.na(TrtEff[[j]]$oObs) != FALSE) {
+      if (sum(is.na(TrtEff[[1]]$sObs)) != 0 | is.na(TrtEff[[1]]$oObs) != FALSE) {
         cat("\n")
         print(paste("Unable to estimate survival time at ", timePoint, 
         " time-unit(s) because there are too few events within one or more subpopulation(s)."))
@@ -201,7 +273,7 @@ setMethod("test",
     test <- NULL
 
     # return immediately if nperm is 0
-    if (nperm > 0) {
+    if (nperm > 0 & length(.Object@trts) > 1) {
       win   <- sp@win
       nsubpop <- sp@nsubpop
       osubpop <- sp@subpop
@@ -376,20 +448,31 @@ setMethod("test",
 print.estimate.CI <- function(x, timePoint, trts) {
   for (j in 1:x@effect$ntrts) {
     cat("\n")
-    #
-    #   print out the cumulative incidence results 
-    #
-    write(paste("Cumulative incidence estimates for treatment group", trts[j],
-      "at time point", timePoint), file="")
+    if (x@effect$ntrts == 1) {
+      write(paste("Cumulative incidence estimates ",
+        "at time point", timePoint), file="")
+    } else {
+      write(paste("Cumulative incidence estimates for treatment group", trts[j],
+        "at time point", timePoint), file="")
+    }
+
+    overall_lbl <- -1
+    if (x@subpop@win@type == "tail-oriented") {
+      if (length(x@subpop@win@r1) == 1) {
+        overall_lbl <- 1
+      } else if (length(x@subpop@win@r2) == 1) {
+        overall_lbl <- length(x@subpop@win@r1) + 1
+      }
+    }
 
     temp <- matrix(c(1:x@subpop@nsubpop, round(x@effect$TrtEff[[j]]$sObs, digits=4),
       round(x@effect$TrtEff[[j]]$sSE, digits=4)), ncol=3)
     write("                        Cumulative",file="")
     write("     Subpopulation      Incidence        Std. Err.",file="")
     for (i in 1:x@subpop@nsubpop) {
-      if (x@subpop@win@type == "tail-oriented" & i == (length(x@subpop@win@r1)+1)) {
+      if (x@subpop@win@type == "tail-oriented" & i == overall_lbl) {
         write(paste(format(temp[i,1], width=12), format(temp[i,2], width=19, nsmall=4),
-          format(temp[i,3], width=15, nsmall=4), "Overall"), file="")
+          format(temp[i,3], width=15, nsmall=4), "(entire cohort)"), file="")
       } else {
         write(paste(format(temp[i,1], width=12), format(temp[i,2], width=19, nsmall=4),
           format(temp[i,3], width=15, nsmall=4)), file="")
@@ -404,57 +487,59 @@ print.estimate.CI <- function(x, timePoint, trts) {
     cat("\n")
   }
 
-  cat("\n")
-  write(paste("Cumulative incidence differences at time point",timePoint), file="")
+  if (x@effect$ntrts > 1) {
+    cat("\n")
+    write(paste("Cumulative incidence differences at time point",timePoint), file="")
 
-  for (j in 2:x@effect$ntrts){
-    cat("\n")
-    write(paste("trt ", trts[j], "vs. trt ", trts[1]), file = "")
+    for (j in 2:x@effect$ntrts) {
+      cat("\n")
+      write(paste("trt", trts[1], "vs. trt", trts[j]), file = "")
 
-    temp <- matrix(c(1:x@subpop@nsubpop,
-      round(x@effect$TrtEff[[1]]$sObs - x@effect$TrtEff[[j]]$sObs, digits = 4),
-      round(sqrt(x@effect$TrtEff[[1]]$sSE^2+x@effect$TrtEff[[j]]$sSE^2), digits = 4)), ncol = 3)
-    write("                        Cumulative",file="")
-    write("                        Incidence",file="")
-    write("     Subpopulation      Difference       Std. Err.",file="")
-    for (i in 1:x@subpop@nsubpop) {
-      if (x@subpop@win@type == "tail-oriented" & i == (length(x@subpop@win@r1)+1)) {
-        write(paste(format(temp[i,1],width=12),format(temp[i,2],width=19,nsmall=4),
-          format(temp[i,3],width=15,nsmall=4),"Overall"),file="")
-      } else {
-        write(paste(format(temp[i,1],width=12),format(temp[i,2],width=19,nsmall=4),
-          format(temp[i,3],width=15,nsmall=4)),file="")
+      temp <- matrix(c(1:x@subpop@nsubpop,
+        round(x@effect$TrtEff[[1]]$sObs - x@effect$TrtEff[[j]]$sObs, digits = 4),
+        round(sqrt(x@effect$TrtEff[[1]]$sSE^2+x@effect$TrtEff[[j]]$sSE^2), digits = 4)), ncol = 3)
+      write("                        Cumulative",file="")
+      write("                        Incidence",file="")
+      write("     Subpopulation      Difference       Std. Err.",file="")
+      for (i in 1:x@subpop@nsubpop) {
+        if (x@subpop@win@type == "tail-oriented" & i == overall_lbl) {
+          write(paste(format(temp[i,1],width=12),format(temp[i,2],width=19,nsmall=4),
+            format(temp[i,3],width=15,nsmall=4),"(entire cohort)"),file="")
+        } else {
+          write(paste(format(temp[i,1],width=12),format(temp[i,2],width=19,nsmall=4),
+            format(temp[i,3],width=15,nsmall=4)),file="")
+        }
       }
-    }
-    if (x@subpop@win@type != "tail-oriented") {
-      write(paste("        Overall",
-        format(round(x@effect$TrtEff[[1]]$oObs-x@effect$TrtEff[[j]]$oObs, digits = 4), nsmall = 4, width = 16),
-        format(round(sqrt(x@effect$TrtEff[[1]]$oSE^2+x@effect$TrtEff[[j]]$oSE^2), digits = 4), nsmall = 4, width = 15)), file="")
-    }
-    cat("\n")
-    write("Hazard ratio estimates",file="")
-    temp <- matrix(c(1:x@subpop@nsubpop,
-      round(x@effect$Ratios[[j - 1]]$logHR,digits=6),
-      round(x@effect$Ratios[[j - 1]]$logHRSE,digits=6),
-      round(exp(x@effect$Ratios[[j - 1]]$logHR),digits=2)),ncol=4)
-    write("     Subpopulation        Log HR       Std. Err.       Hazard Ratio",file="")
-    for (i in 1:x@subpop@nsubpop) {
-      if (x@subpop@win@type == "tail-oriented" & i == (length(x@subpop@win@r1)+1)){
-        write(paste(format(temp[i,1],width=12),format(temp[i,2],width=19,nsmall=6),
-          format(temp[i,3],width=14,nsmall=6),format(temp[i,4],width=15,nsmall=2),"Overall"),file="")
-      } else {
-        write(paste(format(temp[i,1],width=12),format(temp[i,2],width=19,nsmall=6),
-          format(temp[i,3],width=14,nsmall=6),format(temp[i,4],width=15,nsmall=2)),file="")
+      if (x@subpop@win@type != "tail-oriented") {
+        write(paste("        Overall",
+          format(round(x@effect$TrtEff[[1]]$oObs-x@effect$TrtEff[[j]]$oObs, digits = 4), nsmall = 4, width = 16),
+          format(round(sqrt(x@effect$TrtEff[[1]]$oSE^2+x@effect$TrtEff[[j]]$oSE^2), digits = 4), nsmall = 4, width = 15)), file="")
       }
+      cat("\n")
+      write("Hazard ratio estimates",file="")
+      temp <- matrix(c(1:x@subpop@nsubpop,
+        round(x@effect$Ratios[[j - 1]]$logHR,digits=6),
+        round(x@effect$Ratios[[j - 1]]$logHRSE,digits=6),
+        round(exp(x@effect$Ratios[[j - 1]]$logHR),digits=2)),ncol=4)
+      write("     Subpopulation        Log HR       Std. Err.       Hazard Ratio",file="")
+      for (i in 1:x@subpop@nsubpop) {
+        if (x@subpop@win@type == "tail-oriented" & i == overall_lbl){
+          write(paste(format(temp[i,1],width=12),format(temp[i,2],width=19,nsmall=6),
+            format(temp[i,3],width=14,nsmall=6),format(temp[i,4],width=15,nsmall=2),"(entire cohort)"),file="")
+        } else {
+          write(paste(format(temp[i,1],width=12),format(temp[i,2],width=19,nsmall=6),
+            format(temp[i,3],width=14,nsmall=6),format(temp[i,4],width=15,nsmall=2)),file="")
+        }
+      }
+      if (x@subpop@win@type != "tail-oriented") {
+        write(paste("        Overall",
+          format(round(x@effect$Ratios[[j - 1]]$oLogHR,      digits=6), nsmall=6, width=16),
+          format(round(x@effect$Ratios[[j - 1]]$oLogHRSE,    digits=6), nsmall=6, width=14),
+          format(round(exp(x@effect$Ratios[[j - 1]]$oLogHR), digits=2), nsmall=2, width=15)),
+          file="")
+      }
+      cat("\n")
     }
-    if (x@subpop@win@type != "tail-oriented") {
-      write(paste("        Overall",
-        format(round(x@effect$Ratios[[j - 1]]$oLogHR,      digits=6), nsmall=6, width=16),
-        format(round(x@effect$Ratios[[j - 1]]$oLogHRSE,    digits=6), nsmall=6, width=14),
-        format(round(exp(x@effect$Ratios[[j - 1]]$oLogHR), digits=2), nsmall=2, width=15)),
-        file="")
-    }
-    cat("\n")
   }
 }
 
@@ -506,6 +591,8 @@ print.stat.CI <- function(stobj, trts) {
 setMethod("print",
   signature = "stmodelCI",
   definition = function(x, stobj, estimate = TRUE, cov = TRUE, test = TRUE, ...) {
+    ntrts <- length(x@trts)
+
     #
     # 1. estimates
     #
@@ -516,14 +603,14 @@ setMethod("print",
     #
     # 2. covariance matrices
     #
-    if (cov) {
+    if (cov & ntrts > 1) {
       print.cov.CI(stobj, x@timePoint, x@trts)
     }
   
     #
     # 3. Supremum test and Chi-square test results
     #
-    if (test) {
+    if (test & ntrts > 1) {
       print.stat.CI(stobj, x@trts)
     }
   }

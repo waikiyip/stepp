@@ -10,7 +10,7 @@
 }
 
 \usage{
-  stepp.win(type = "sliding", r1 = 5, r2 = 20, e1 = NULL, e2 = NULL, basedon = "all")
+  stepp.win(type = "sliding", r1 = 5, r2 = 20, e1 = NULL, e2 = NULL)
 }
 
 \arguments{
@@ -21,7 +21,6 @@
 	    tail-oriented window: a vector of minimum covariate values for each subpopulation}
   \item{e1}{sliding window: minimum number of events allowed in overlapping windows}
   \item{e2}{sliding window: number of events in each subpopulation}
-  \item{basedon}{what the window is based on - "all" (default)"}
 }
 
 \details{

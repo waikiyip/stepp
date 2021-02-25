@@ -13,7 +13,7 @@
 
 \usage{
   balance_patients(range_r1, range_r2, maxnsubpops, covar, verbose = FALSE,
-    plot = FALSE, contour = FALSE, nlevels = 5, border = FALSE)
+    plot = FALSE, contour = FALSE, nlevels = 5)
 }
 
 \arguments{
@@ -26,8 +26,7 @@
   \item{contour}{length-one logical vector; if \code{TRUE} adds to the plot the variance contour lines for each
   subpopulation number}
   \item{nlevels}{length-one numeric vector providing the number of contour lines to plot}
-  \item{border}{length-one logical vector; if \code{TRUE} adds to the plot some borders that separate the results
-  for different number of subpopulations}
+  \item{showstatus}{length-one logical vector; if \code{TRUE} displays a bar showing the progress of the calculations; default is TRUE}
 }
 
 \value{
@@ -64,5 +63,5 @@ ranger1 <- c(300, 500)
 maxnsubpops <- 50
 
 res_bal <- balance_patients(ranger1, ranger2, maxnsubpops, balance_example$covar,
-  plot = TRUE, verbose = TRUE, contour = TRUE, nlevels = 6, border = TRUE)
+  plot = TRUE, verbose = TRUE, contour = TRUE, nlevels = 6)
 }

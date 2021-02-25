@@ -6,28 +6,68 @@
 # stepp model: GLM     #
 #######################
 setClass("stmodelGLM",
-	   representation(coltrt   = "numeric",	# treatment
-				colY     = "numeric",   # outcome 
-				trts     = "numeric",	# trt encoding
-				MM	   = "ANY",   	# model matrix
-				glm	   = "character", # glm type
-				link	   = "character", # link function
-				debug    = "numeric"    # debug flag
-				),
-	   prototype(coltrt = 0,
-			 colY   = 0,
-			 trts   = 0,
-			 MM     = NULL,
-			 glm	  = "",
-			 link   = "",
-			 debug  = 0
-			)
-	   )
+  representation(
+    coltrt   = "numeric",	  # treatment
+  	colY     = "numeric",   # outcome 
+  	trts     = "numeric",	  # trt encoding
+  	MM	     = "ANY",   	  # model matrix
+  	glm	     = "character", # glm type
+  	link	   = "character"  # link function
+  ),
+  prototype(
+   coltrt = 0,
+   colY   = 0,
+   trts   = 0,
+   MM     = NULL,
+   glm	  = "",
+   link   = ""
+  )
+)
 
+setMethod("initialize", "stmodelGLM",
+  function(.Object, coltrt, colY, trts, MM, glm, link, ...) {
+    if (missing(colY)) {
+       colY <- numeric()
+    }
+    if (missing(MM)) {
+       MM <- matrix()
+    }
+    if (missing(glm)) {
+      glm <- "gaussian"
+    }
+    if (missing(link)) {
+      link <- "identity"
+    }
+    if (missing(coltrt)) {
+      coltrt <- rep(1, length(colY))
+    }
+    if (missing(trts)) {
+      trts <- 1
+    }
+    .Object@coltrt <- coltrt
+    .Object@colY <- colY
+    .Object@trts <- trts
+    .Object@MM <- MM
+    .Object@glm <- glm
+    .Object@link <- link
+    if (!validObject(.Object)) stop("")
+    callNextMethod(.Object, ...)
+  }
+)
+
+setValidity("stmodelGLM", 
+  function(object) {
+    status <- TRUE
+
+    # add conditions to verify
+
+    return(status)
+  }
+)
 
 setMethod("estimate",	
-	    signature="stmodelGLM",
-	    definition=function(.Object, sp, ...){
+  signature="stmodelGLM",
+  definition=function(.Object, sp, ...) {
 		modtype   <- sp@win@type
     if (modtype == "sliding_events") {
       stop("The sliding_events window type can be used only with the stmodelCI interface.")
@@ -40,32 +80,30 @@ setMethod("estimate",
 		covariate <- .Object@MM
 		glm	      <- .Object@glm
 		link	    <- .Object@link
-		debug	    <- .Object@debug != 0
 
 		ntrts     <- length(trts) 
 		txassign  <- rep(NA, length(coltrt))
 
-		for (j in 1:ntrts)
-		  txassign[which(coltrt == trts[j])] <- j
+		for (j in 1:ntrts) txassign[which(coltrt == trts[j])] <- j
 
 		Obs	 <- list(sObs = rep(0, nsubpop),
-				   sSE  = rep(0, nsubpop),
-				   oObs = 0,
-				   oSE  = 0)
+      				   sSE  = rep(0, nsubpop),
+      				   oObs = 0,
+      				   oSE  = 0)
 		TrtEff <- array(list(Obs),ntrts)
 
 		HRs    <- list(skmw	= 0,
-				   logHR	= rep(0,nsubpop),
-				   logHRSE  = rep(0,nsubpop),
-				   ologHR	= 0,
-				   ologHRSE = 0,
-				   logHRw	= 0)
-		Ratios <- array(list(HRs), ntrts-1)
+        				   logHR	= rep(0,nsubpop),
+        				   logHRSE  = rep(0,nsubpop),
+        				   ologHR	= 0,
+        				   ologHRSE = 0,
+        				   logHRw	= 0)
+		Ratios <- array(list(HRs), ntrts - 1)
 
 		## Create a formula for the model:
-		if (!is.null(covariate)){
+		if (!is.null(covariate)) {
 		  has.intercept <- colnames(covariate)[1]=="(Intercept)"
-		  if (has.intercept){
+		  if (has.intercept) {
 		    cstart <- 2
 		    xnam <- c("txassign", colnames(covariate)[cstart:dim(covariate)[2]])
 		    fmla <- as.formula(paste("OuTcOmE ~ ", paste(xnam, collapse= "+")))
@@ -79,185 +117,258 @@ setMethod("estimate",
 		  fmla <- as.formula("OuTcOmE ~ txassign")
 		}
 
-		for (j in 2:ntrts) {
+    if (ntrts > 1) {
+      for (j in 2:ntrts) {
+        DIFF       <- rep(0, nsubpop)
+        DIFFSE     <- rep(0, nsubpop)
 
-	  	  DIFF       <- rep(0, nsubpop)
-    	  	  DIFFSE     <- rep(0, nsubpop)
-  
-    	  	  for (i in 1:nsubpop) {
-		    seli    <- (txassign==1 | txassign==j) & (subpop[,i]==1)
+        for (i in 1:nsubpop) {
+          seli    <- (txassign==1 | txassign==j) & (subpop[,i]==1)
 
-		    if (glm == "gaussian"){
-		      m1 <- glm(fmla, subset=seli, family=gaussian(link="identity"))
-		    }
-		    else
-		    if (glm == "binomial"){
-			m1 <- glm(fmla, subset=seli, family=binomial(link="logit"))
-		    }
-		    else
-		    if (glm == "poisson") {
-			m1 <- glm(fmla, subset=seli, family=poisson(link="log"))
-		    }
-		    else {
-		      stop("Unknown Model !")
-		    }
-		    # use predict 
-		    if (!is.null(covariate)){
-		      mm1  <- covariate[which(seli),,drop=FALSE]
-		      mm1  <- cbind(txassign[which(seli)], mm1)
-		      cm   <- apply(mm1, 2, mean)
-		      if (has.intercept) cm   <- cm[-2]
-		      names(cm)[1] <- "txassign"
-		      cm[1]<- 1	# treatment indicator is 1
-		      p1   <- predict(m1, newdata=data.frame(t(cm)), se.fit=TRUE)
-		      cm[1]<- 0	# treatment indicator is 0
-		      p2   <- predict(m1, newdata=data.frame(t(cm)), se.fit=TRUE)
-		    } else {
-		      p1   <- predict(m1, newdata=data.frame(txassign=1), se.fit=TRUE)
-		      p2   <- predict(m1, newdata=data.frame(txassign=j), se.fit=TRUE)
-		    }
+          if (glm == "gaussian") {
+            m1 <- glm(fmla, subset=seli, family=gaussian(link="identity"))
+          } else if (glm == "binomial") {
+            m1 <- glm(fmla, subset=seli, family=binomial(link="logit"))
+          } else if (glm == "poisson") {
+            m1 <- glm(fmla, subset=seli, family=poisson(link="log"))
+          } else {
+            stop("Unknown Model !")
+          }
+          # use predict 
+          if (!is.null(covariate)) {
+            mm1  <- covariate[which(seli),,drop=FALSE]
+            mm1  <- cbind(txassign[which(seli)], mm1)
+            cm   <- apply(mm1, 2, mean)
+            if (has.intercept) cm <- cm[-2]
+            names(cm)[1] <- "txassign"
+            cm[1]<- 1	# treatment indicator is 1
+            p1   <- predict(m1, newdata=data.frame(t(cm)), se.fit=TRUE)
+            cm[1]<- 0	# treatment indicator is 0
+            p2   <- predict(m1, newdata=data.frame(t(cm)), se.fit=TRUE)
+          } else {
+            p1   <- predict(m1, newdata=data.frame(txassign=1), se.fit=TRUE)
+            p2   <- predict(m1, newdata=data.frame(txassign=j), se.fit=TRUE)
+          }
 
-		    if (glm == "gaussian"){
-                  TrtEff[[1]]$sObs[i]   <- p1$fit
-	            TrtEff[[1]]$sSE[i]    <- p1$se
+          if (glm == "gaussian") {
+            TrtEff[[1]]$sObs[i]   <- p1$fit
+            TrtEff[[1]]$sSE[i]    <- p1$se
 
-                  TrtEff[[j]]$sObs[i]   <- p2$fit
-                  TrtEff[[j]]$sSE[i]    <- p2$se
+            TrtEff[[j]]$sObs[i]   <- p2$fit
+            TrtEff[[j]]$sSE[i]    <- p2$se
 
-	            DIFF[i]		       <- coef(m1)["txassign"]
-		      DIFFSE[i]		       <- sqrt(diag(vcov(m1))[cstart])
-		      Ratios[[j-1]]$logHR[i]   <- log(TrtEff[[1]]$sObs[i])-log(TrtEff[[j]]$sObs[i])
-		      # use delta method
-		      Ratios[[j-1]]$logHRSE[i] <- sqrt((TrtEff[[1]]$sSE[i]^2)/(TrtEff[[1]]$sObs[i]^2) + (TrtEff[[j]]$sSE[i]^2)/(TrtEff[[j]]$sObs[i]^2))
-		    } else
-		    if (glm == "binomial"){
-		      exp1 			    <- exp(p1$fit)
-                  TrtEff[[1]]$sObs[i]   <- exp1/(1+exp1)
-	            TrtEff[[1]]$sSE[i]    <- p1$se*(exp1/((1+exp1)^2))	# delta method
+            DIFF[i]		       <- coef(m1)["txassign"]
+            DIFFSE[i]		       <- sqrt(diag(vcov(m1))[cstart])
+            Ratios[[j-1]]$logHR[i]   <- log(TrtEff[[1]]$sObs[i])-log(TrtEff[[j]]$sObs[i])
+            # use delta method
+            Ratios[[j-1]]$logHRSE[i] <- sqrt((TrtEff[[1]]$sSE[i]^2)/(TrtEff[[1]]$sObs[i]^2) + (TrtEff[[j]]$sSE[i]^2)/(TrtEff[[j]]$sObs[i]^2))
+          } else if (glm == "binomial") {
+            exp1 			    <- exp(p1$fit)
+            TrtEff[[1]]$sObs[i]   <- exp1/(1+exp1)
+            TrtEff[[1]]$sSE[i]    <- p1$se*(exp1/((1+exp1)^2))	# delta method
 
-		      exp2 			    <- exp(p2$fit)
-                  TrtEff[[j]]$sObs[i]   <- exp2/(1+exp2)
-                  TrtEff[[j]]$sSE[i]    <- p2$se*(exp2/((1+exp2)^2))	# delta method
-	
-	            DIFF[i]		       <- TrtEff[[1]]$sObs[i] - TrtEff[[j]]$sObs[i]
-		      DIFFSE[i]		       <- sqrt(TrtEff[[1]]$sSE[i]^2 + TrtEff[[j]]$sSE[i]^2)
-		    
-		      Ratios[[j-1]]$logHR[i]   <- coef(m1)["txassign"]	# log OR from the model coefficient
-		      Ratios[[j-1]]$logHRSE[i] <- sqrt(diag(vcov(m1))[cstart])
-		    } else
-		    if (glm == "poisson"){
-                  TrtEff[[1]]$sObs[i]   <- exp(p1$fit)
-	            TrtEff[[1]]$sSE[i]    <- p1$se*exp(p1$fit)	# delta method
+            exp2 			    <- exp(p2$fit)
+            TrtEff[[j]]$sObs[i]   <- exp2/(1+exp2)
+            TrtEff[[j]]$sSE[i]    <- p2$se*(exp2/((1+exp2)^2))	# delta method
 
-                  TrtEff[[j]]$sObs[i]   <- exp(p2$fit)
-                  TrtEff[[j]]$sSE[i]    <- p2$se*exp(p2$fit)	# delta method
+            DIFF[i]		       <- TrtEff[[1]]$sObs[i] - TrtEff[[j]]$sObs[i]
+            DIFFSE[i]		       <- sqrt(TrtEff[[1]]$sSE[i]^2 + TrtEff[[j]]$sSE[i]^2)
 
-	            DIFF[i]		       <- TrtEff[[1]]$sObs[i] - TrtEff[[j]]$sObs[i]
-	            DIFFSE[i]		       <- sqrt(TrtEff[[1]]$sSE[i]^2 + TrtEff[[j]]$sSE[i]^2)
-		      Ratios[[j-1]]$logHR[i]   <- coef(m1)["txassign"] 
-		      Ratios[[j-1]]$logHRSE[i] <- sqrt(diag(vcov(m1))[cstart])	# log RR from the model coefficient
-		    }
-	        }  # for each subpopulation
+            Ratios[[j-1]]$logHR[i]   <- coef(m1)["txassign"]	# log OR from the model coefficient
+            Ratios[[j-1]]$logHRSE[i] <- sqrt(diag(vcov(m1))[cstart])
+          } else if (glm == "poisson") {
+            TrtEff[[1]]$sObs[i]   <- exp(p1$fit)
+            TrtEff[[1]]$sSE[i]    <- p1$se*exp(p1$fit)	# delta method
 
-	  	  Ratios[[j-1]]$skmw   <- sum(DIFF/DIFFSE)
-		  Ratios[[j-1]]$logHRw <- sum(Ratios[[j-1]]$logHR/Ratios[[j-1]]$logHRSE)
-		  if (glm == "gaussian"){
-	  	    m1all     <- glm(fmla, family=gaussian(link="identity"))
-		  } else 
-		  if (glm == "binomial"){
-	  	    m1all     <- glm(fmla, family=binomial(link="logit"))
-		  } else 
-		  if (glm == "poisson"){
-	  	    m1all     <- glm(fmla, family=poisson(link="log"))
-		  }
+            TrtEff[[j]]$sObs[i]   <- exp(p2$fit)
+            TrtEff[[j]]$sSE[i]    <- p2$se*exp(p2$fit)	# delta method
+
+            DIFF[i]		       <- TrtEff[[1]]$sObs[i] - TrtEff[[j]]$sObs[i]
+            DIFFSE[i]		       <- sqrt(TrtEff[[1]]$sSE[i]^2 + TrtEff[[j]]$sSE[i]^2)
+            Ratios[[j-1]]$logHR[i]   <- coef(m1)["txassign"] 
+            Ratios[[j-1]]$logHRSE[i] <- sqrt(diag(vcov(m1))[cstart])	# log RR from the model coefficient
+          }
+        }  # for each subpopulation
+
+        Ratios[[j-1]]$skmw   <- sum(DIFF/DIFFSE)
+        Ratios[[j-1]]$logHRw <- sum(Ratios[[j-1]]$logHR/Ratios[[j-1]]$logHRSE)
+        if (glm == "gaussian") {
+          m1all     <- glm(fmla, family=gaussian(link="identity"))
+        } else if (glm == "binomial") {
+          m1all     <- glm(fmla, family=binomial(link="logit"))
+        } else if (glm == "poisson") {
+          m1all     <- glm(fmla, family=poisson(link="log"))
+        }
+
+        if (!is.null(covariate)) {
+          om1    <- covariate
+          om1    <- cbind(txassign, om1)
+          onv1   <- apply(om1,2,mean)
+          if (has.intercept) onv1 <- onv1[-2]
+          names(onv1)[1] <- "txassign"
+          onv1[1]<- 1	# treatment indicator is 1
+          op1    <- predict(m1all, newdata=data.frame(t(onv1)), se.fit=TRUE)
+          onv1[1]<- j	# treatment indicator is j
+          op2    <- predict(m1all, newdata=data.frame(t(onv1)), se.fit=TRUE)
+        } else {
+          op1    <- predict(m1all, newdata=data.frame(txassign=1), se.fit=TRUE)
+          op2    <- predict(m1all, newdata=data.frame(txassign=j), se.fit=TRUE)
+        }
+
+        if (glm == "gaussian") {
+          TrtEff[[1]]$oObs  <- op1$fit
+          TrtEff[[1]]$oSE   <- op1$se
+
+          TrtEff[[j]]$oObs  <- op2$fit
+          TrtEff[[j]]$oSE   <- op2$se
+
+          Ratios[[j-1]]$ologHR   <- log(TrtEff[[1]]$oObs)-log(TrtEff[[j]]$oObs)
+          # delta method
+          Ratios[[j-1]]$ologHRSE <- sqrt((TrtEff[[1]]$oSE^2)/(TrtEff[[1]]$oObs^2)
+          +(TrtEff[[j]]$oSE^2)/(TrtEff[[j]]$oObs^2))	
+        } else if (glm == "binomial") {
+          oexp1 		    <- exp(op1$fit)
+          TrtEff[[1]]$oObs  <- oexp1/(1+oexp1)
+          TrtEff[[1]]$oSE   <- op1$se*(oexp1/((1+oexp1)^2))	# delta method
+
+          oexp2 		    <- exp(op2$fit)
+          TrtEff[[j]]$oObs  <- oexp2/(1+oexp2)
+          TrtEff[[j]]$oSE   <- op2$se*(oexp2/((1+oexp2)^2))	# delta method
+
+          Ratios[[j-1]]$ologHR   <- coef(m1all)["txassign"]
+          Ratios[[j-1]]$ologHRSE <- sqrt(diag(vcov(m1all))[cstart])	
+        } else if (glm == "poisson") {
+          TrtEff[[1]]$oObs  <- exp(op1$fit)
+          TrtEff[[1]]$oSE   <- op1$se*exp(op1$fit)	# delta method
+
+          TrtEff[[j]]$oObs  <- exp(op2$fit)
+          TrtEff[[j]]$oSE   <- op2$se*exp(op2$fit)	# delta method
+
+          Ratios[[j-1]]$ologHR   <- coef(m1all)["txassign"]
+          Ratios[[j-1]]$ologHRSE <- sqrt(diag(vcov(m1all))[cstart])
+        }
+
+        if (sum(is.na(TrtEff[[1]]$sObs)) != 0 | sum(is.na(TrtEff[[j]]$sObs)) != 0 | 
+          is.na(TrtEff[[1]]$oObs) != FALSE | is.na(TrtEff[[j]]$oObs) != FALSE) {
+          cat("\n")
+          print(paste("Unable to estimate the effect because there are too few events within one or more subpopulation(s)."))
+          print(paste("The problem may be avoided by constructing larger subpopulations."))
+          stop()
+        }
+  		} # for each trt j
+    }
 		  
-		  if (!is.null(covariate)){
-		    om1    <- covariate
-		    om1    <- cbind(txassign, om1)
-		    onv1   <- apply(om1,2,mean)
-		    if (has.intercept) onv1 <- onv1[-2]
-		    names(onv1)[1] <- "txassign"
-		    onv1[1]<- 1	# treatment indicator is 1
-		    op1    <- predict(m1all, newdata=data.frame(t(onv1)), se.fit=TRUE)
-		    onv1[1]<- j	# treatment indicator is j
-		    op2    <- predict(m1all, newdata=data.frame(t(onv1)), se.fit=TRUE)
-		  } else {
-		    op1    <- predict(m1all, newdata=data.frame(txassign=1), se.fit=TRUE)
-		    op2    <- predict(m1all, newdata=data.frame(txassign=j), se.fit=TRUE)
-		  }
+    if (ntrts == 1) {
+      if (!is.null(covariate)) {
+        has.intercept <- colnames(covariate)[1]=="(Intercept)"
+        if (has.intercept) {
+          cstart <- 2
+          xnam <- colnames(covariate)[cstart:dim(covariate)[2]]
+          fmla <- as.formula(paste("OuTcOmE ~ ", paste(xnam, collapse= "+")))
+        } else {
+          cstart <- 1
+          xnam <- colnames(covariate)[cstart:dim(covariate)[2]]
+          fmla <- as.formula(paste("OuTcOmE ~ 0+", paste(xnam, collapse= "+")))  
+        }     
+      } else {
+        fmla <- as.formula("OuTcOmE ~ 1")
+      }
 
-		  if (glm == "gaussian"){
-	  	    TrtEff[[1]]$oObs  <- op1$fit
-		    TrtEff[[1]]$oSE   <- op1$se
+      for (i in 1:nsubpop) {
+        seli    <- (txassign==1) & (subpop[,i]==1)
 
-	  	    TrtEff[[j]]$oObs  <- op2$fit
-		    TrtEff[[j]]$oSE   <- op2$se
+        if (glm == "gaussian") {
+          m1 <- glm(fmla, subset=seli, family=gaussian(link="identity"))
+        } else if (glm == "binomial") {
+          m1 <- glm(fmla, subset=seli, family=binomial(link="logit"))
+        } else if (glm == "poisson") {
+          m1 <- glm(fmla, subset=seli, family=poisson(link="log"))
+        } else {
+          stop("Unknown Model !")
+        }
+        # use predict 
+        if (!is.null(covariate)) {
+          mm1  <- covariate[which(seli),,drop=FALSE]
+          cm   <- apply(mm1, 2, mean)
+          if (has.intercept) cm <- cm[-1]
+          p1   <- predict(m1, newdata=data.frame(t(cm)), se.fit=TRUE)
+        } else {
+          p1   <- predict(m1, newdata=data.frame(1), se.fit=TRUE)
+        }
 
-		    Ratios[[j-1]]$ologHR   <- log(TrtEff[[1]]$oObs)-log(TrtEff[[j]]$oObs)
-		    # delta method
-		    Ratios[[j-1]]$ologHRSE <- sqrt((TrtEff[[1]]$oSE^2)/(TrtEff[[1]]$oObs^2)
-							+(TrtEff[[j]]$oSE^2)/(TrtEff[[j]]$oObs^2)
-						  )	
-		  } else 
-		  if (glm == "binomial"){
-		    oexp1 		    <- exp(op1$fit)
-	  	    TrtEff[[1]]$oObs  <- oexp1/(1+oexp1)
-		    TrtEff[[1]]$oSE   <- op1$se*(oexp1/((1+oexp1)^2))	# delta method
+        if (glm == "gaussian") {
+          TrtEff[[1]]$sObs[i]   <- p1$fit
+          TrtEff[[1]]$sSE[i]    <- p1$se
+        } else if (glm == "binomial") {
+          exp1          <- exp(p1$fit)
+          TrtEff[[1]]$sObs[i]   <- exp1/(1+exp1)
+          TrtEff[[1]]$sSE[i]    <- p1$se*(exp1/((1+exp1)^2))  # delta method
+        } else if (glm == "poisson") {
+          TrtEff[[1]]$sObs[i]   <- exp(p1$fit)
+          TrtEff[[1]]$sSE[i]    <- p1$se*exp(p1$fit)  # delta method
+        }
+      }  # for each subpopulation
 
-		    oexp2 		    <- exp(op2$fit)
-	  	    TrtEff[[j]]$oObs  <- oexp2/(1+oexp2)
-		    TrtEff[[j]]$oSE   <- op2$se*(oexp2/((1+oexp2)^2))	# delta method
+      if (glm == "gaussian") {
+        m1all     <- glm(fmla, family=gaussian(link="identity"))
+      } else if (glm == "binomial") {
+        m1all     <- glm(fmla, family=binomial(link="logit"))
+      } else if (glm == "poisson") {
+        m1all     <- glm(fmla, family=poisson(link="log"))
+      }
 
-		    Ratios[[j-1]]$ologHR   <- coef(m1all)["txassign"]
-		    Ratios[[j-1]]$ologHRSE <- sqrt(diag(vcov(m1all))[cstart])	
-		  } else
-		  if (glm == "poisson") {
-	  	    TrtEff[[1]]$oObs  <- exp(op1$fit)
-		    TrtEff[[1]]$oSE   <- op1$se*exp(op1$fit)	# delta method
+      if (!is.null(covariate)) {
+        om1    <- covariate
+        onv1   <- apply(om1,2,mean)
+        if (has.intercept) onv1 <- onv1[-2]
+        op1    <- predict(m1all, newdata=data.frame(t(onv1)), se.fit=TRUE)
+      } else {
+        op1    <- predict(m1all, newdata=data.frame(1), se.fit=TRUE)
+      }
 
-	  	    TrtEff[[j]]$oObs  <- exp(op2$fit)
-		    TrtEff[[j]]$oSE   <- op2$se*exp(op2$fit)	# delta method
+      if (glm == "gaussian") {
+        TrtEff[[1]]$oObs  <- op1$fit
+        TrtEff[[1]]$oSE   <- op1$se
+      } else if (glm == "binomial") {
+        oexp1         <- exp(op1$fit)
+        TrtEff[[1]]$oObs  <- oexp1/(1+oexp1)
+        TrtEff[[1]]$oSE   <- op1$se*(oexp1/((1+oexp1)^2)) # delta method
+      } else if (glm == "poisson") {
+        TrtEff[[1]]$oObs  <- exp(op1$fit)
+        TrtEff[[1]]$oSE   <- op1$se*exp(op1$fit)  # delta method
+      }
 
-		    Ratios[[j-1]]$ologHR   <- coef(m1all)["txassign"]
-		    Ratios[[j-1]]$ologHRSE <- sqrt(diag(vcov(m1all))[cstart])
-    	 	  }
-    	
-    	  	  if (sum(is.na(TrtEff[[1]]$sObs)) != 0 | sum(is.na(TrtEff[[j]]$sObs)) != 0 | 
-                    is.na(TrtEff[[1]]$oObs) != FALSE | is.na(TrtEff[[j]]$oObs) != FALSE) {
-          	    cat("\n")
-        	    print(paste("Unable to estimate the effect because there are too few events within one or more subpopulation(s)."))
-        	    print(paste("The problem may be avoided by constructing larger subpopulations."))
-        	    stop()
-    	  	  }
+      if (sum(is.na(TrtEff[[1]]$sObs)) != 0 | is.na(TrtEff[[1]]$oObs) != FALSE) {
+        cat("\n")
+        print(paste("Unable to estimate the effect because there are too few events within one or more subpopulation(s)."))
+        print(paste("The problem may be avoided by constructing larger subpopulations."))
+        stop()
+      }
+    }
 
-		} # for each trt j
-
-		  
-		if (glm == "gaussian")
+		if (glm == "gaussian") {
 		  model = "GLMGe"
-		else
-		if (glm == "binomial")
+    } else if (glm == "binomial") {
 		  model = "GLMBe"
- 		else
-		if (glm == "poisson")
+    } else if (glm == "poisson") {
 		  model = "GLMPe"
+    }
 
-    	  	estimate <- list( model	  = model,
-					ntrts	  = ntrts,
-					TrtEff  = TrtEff,
-					Ratios  = Ratios
-				    )	  	
-	    return(estimate)
-	    }
+  	estimate <- list(
+      model	  = model,
+      ntrts	  = ntrts,
+      TrtEff  = TrtEff,
+      Ratios  = Ratios)	  	
+    return(estimate)
+  }
 )
 
-
 setMethod("test",
-	    signature="stmodelGLM",
-	    definition=function(.Object, nperm, sp, effect, showstatus=TRUE){
+  signature="stmodelGLM",
+  definition=function(.Object, nperm, sp, effect, showstatus=TRUE){
 
-	    test <- NULL
-	    if (nperm > 0){
+  test <- NULL
+  if (nperm > 0 & length(.Object@trts) > 1) {
 		win		<- sp@win
 		nsubpop	<- sp@nsubpop
 		osubpop	<- sp@subpop
@@ -267,7 +378,6 @@ setMethod("test",
 		covariate 	<- .Object@MM
 		glm	      <- .Object@glm
 		link		<- .Object@link
-		debug		<- .Object@debug != 0
 
 		ntrts	<- length(trts)
 		txassign  <- rep(-1, length(coltrt)) # do not use NA
@@ -489,7 +599,7 @@ setMethod("test",
         		stop()
       	  }
 		}
-	      if (showstatus) close(pb)
+    if (showstatus) close(pb)
 
 	      # generating the sigmas and p-values
 		sObs   <- effect$TrtEff[[1]]$sObs-effect$TrtEff[[j]]$sObs
@@ -522,7 +632,7 @@ setMethod("test",
 		colnames(sigmas$sigma)	<- mname
 
 	      Res[[j-1]]$HRsigma	<- sigmas$sigma
-	      Res[[j-1]]$HRpvalue     <- ppv2(logratios, logHR, ologHR, nperm, debug=FALSE)
+	      Res[[j-1]]$HRpvalue     <- ppv2(logratios, logHR, ologHR, nperm)
 
 	    } # for each trt j
 
@@ -531,7 +641,7 @@ setMethod("test",
 			     Res	= Res
 			    )
 	  } # nperm == 0 
-	    return(test)
+    return(test)
 	} # end of method
 )
 
@@ -565,8 +675,7 @@ setMethod("subgroup",
 						  trts    = .Object@trts, 
 						  colY    = .Object@colY[subsample], 
 						  MM      = MM.new,
-						  glm     = .Object@glm,
-						  debug   = .Object@debug)
+						  glm     = .Object@glm)
 		  return(model.new)
 	}
 )
@@ -575,7 +684,16 @@ print.estimate.GLM <- function(x, family, trts){
 	model <- x@model
 	sp	<- x@subpop
 
-      for (j in 1:x@effect$ntrts){
+  overall_lbl <- -1
+  if (x@subpop@win@type == "tail-oriented") {
+    if (length(x@subpop@win@r1) == 1) {
+      overall_lbl <- 1
+    } else if (length(x@subpop@win@r2) == 1) {
+      overall_lbl <- length(x@subpop@win@r1) + 1
+    }
+  }
+
+  for (j in 1:x@effect$ntrts) {
 	  cat("\n")
 	  #
 	  #	print out the glm ressults
@@ -584,14 +702,18 @@ print.estimate.GLM <- function(x, family, trts){
 
 	  if (family == "gaussian"){
           cat("\n")
-          write(paste("Effect estimates for treatment group", model@trts[j]), file = "")
+          if (x@effect$ntrts == 1) {
+            write("Effect estimates", file = "")
+          } else {
+            write(paste("Effect estimates for treatment group", model@trts[j]), file = "")
+          }
           temp <- matrix(c(1:sp@nsubpop, round(est$sObs, digits = 4), round(est$sSE, digits = 4)), ncol = 3)
           write("     Subpopulation     Effect		 Std. Err.", file = "")
           for (i in 1:sp@nsubpop) {
-		if (sp@win@type == "tail-oriented" & i == (length(sp@win@r1)+1)){
+		if (sp@win@type == "tail-oriented" & i == overall_lbl){
               write(paste(format(temp[i, 1], width = 12),
 				  format(temp[i, 2], width = 19, nsmall = 4),
-				  format(temp[i, 3], width = 15, nsmall = 4), "Overall"),
+				  format(temp[i, 3], width = 15, nsmall = 4), "(entire cohort)"),
 			 	  file = "")
 		} else {
               write(paste(format(temp[i, 1], width = 12),
@@ -611,14 +733,18 @@ print.estimate.GLM <- function(x, family, trts){
         } else
 	  if (family == "binomial"){
           cat("\n")
-          write(paste("Risk estimates for treatment group", model@trts[j]), file = "")
+          if (x@effect$ntrts == 1) {
+            write("Risk estimates", file = "")
+          } else {
+            write(paste("Risk estimates for treatment group", model@trts[j]), file = "")
+          }
           temp <- matrix(c(1:sp@nsubpop, round(est$sObs, digits = 4), round(est$sSE, digits = 4)), ncol = 3)
           write("     Subpopulation     Risk		 Std. Err.", file = "")
           for (i in 1:sp@nsubpop) {
-		if (sp@win@type == "tail-oriented" & i == (length(sp@win@r1)+1)){
+		if (sp@win@type == "tail-oriented" & i == overall_lbl){
               write(paste(format(temp[i, 1], width = 12),
 				  format(temp[i, 2], width = 19, nsmall = 4),
-				  format(temp[i, 3], width = 15, nsmall = 4), "Overall"),
+				  format(temp[i, 3], width = 15, nsmall = 4), "(entire cohort)"),
 				  file = "")
 		} else {
               write(paste(format(temp[i, 1], width = 12),
@@ -638,14 +764,18 @@ print.estimate.GLM <- function(x, family, trts){
         } else
 	  if (family == "poisson"){
           cat("\n")
-          write(paste("    Effect estimates for treatment group", model@trts[j]), file = "")
+          if (x@effect$ntrts == 1) {
+            write("    Effect estimates", file = "")
+          } else {
+            write(paste("    Effect estimates for treatment group", model@trts[j]), file = "")
+          }
           temp <- matrix(c(1:sp@nsubpop, round(est$sObs, digits = 4), round(est$sSE, digits = 4)), ncol = 3)
           write("     Subpopulation        Effect	Std. Err.", file = "")
           for (i in 1:sp@nsubpop) {
-		if (sp@win@type == "tail-oriented" & i == (length(sp@win@r1)+1)){
+		if (sp@win@type == "tail-oriented" & i == overall_lbl){
               write(paste(format(temp[i, 1], width = 12),
 				  format(temp[i, 2], width = 19, nsmall = 4),
-				  format(temp[i, 3], width = 15, nsmall = 4), "Overall"),
+				  format(temp[i, 3], width = 15, nsmall = 4), "(entire cohort)"),
 				  file = "")
 		} else {
               write(paste(format(temp[i, 1], width = 12), 
@@ -665,275 +795,272 @@ print.estimate.GLM <- function(x, family, trts){
 	  }
 	}
 
+  if (x@effect$ntrts > 1) {
+    cat("\n")
+    write("Effect differences and ratio estimates", file = "")
+  	est1 <- x@effect$TrtEff[[1]]
+
+  	for (j in 2:x@effect$ntrts) {
+  	  cat("\n")
+  	  write(paste("trt", trts[1], "vs. trt", trts[j]), file = "")
+
+
+  	  est	  <- x@effect$TrtEff[[j]]
+  	  ratio <- x@effect$Ratios[[j-1]]
+
+  	  if (family == "gaussian"){
+            cat("\n")
+
+            write(paste("Effect differences"), file = "")
+            temp <- matrix(c(1:sp@nsubpop, round(est1$sObs - est$sObs, digits = 4), 
+              round(sqrt(est1$sSE^2 + est$sSE^2), digits = 4)), ncol = 3)
+            write("                          Effect", file = "")
+            write("     Subpopulation      Difference      Std. Err.", 
+              file = "")
+            for (i in 1:sp@nsubpop) {
+  		if (sp@win@type == "tail-oriented" & i == overall_lbl){
+                write(paste(format(temp[i, 1], width = 12),
+  				  format(temp[i, 2], width = 19, nsmall = 4),
+  				  format(temp[i, 3], width = 15, nsmall = 4), "(entire cohort)"),
+  				  file = "")
+  		} else {
+                write(paste(format(temp[i, 1], width = 12),
+  				  format(temp[i, 2], width = 19, nsmall = 4),
+  				  format(temp[i, 3], width = 15, nsmall = 4)), 
+  				  file = "")
+  		}
+            }
+  	    if (sp@win@type != "tail-oriented")
+              write(paste("        Overall",
+  			format(round(est1$oObs - est$oObs, digits = 4), nsmall = 4, width = 16), 
+              	format(round(sqrt(est1$oSE^2 + est$oSE^2), digits = 4), nsmall = 4, width = 15)),
+  			file = "")
+            cat("\n")
+
+            write(paste("Effect ratios"), file = "")
+            temp <- matrix(c(1:sp@nsubpop, round(ratio$logHR, digits = 4), 
+              		round(ratio$logHRSE, digits = 4), round(exp(ratio$logHR), digits=4)), ncol = 4)	
+            write("                          Effect", file = "")
+            write("     Subpopulation      log Effect Ratio  Std. Err.	    Effect Ratio", file = "")
+            for (i in 1:sp@nsubpop) {
+  		if (sp@win@type == "tail-oriented" & i == overall_lbl){
+                write(paste(format(temp[i, 1], width = 12, ),
+  				  format(round(temp[i, 2], digits = 4), width = 19, nsmall = 4),
+  				  format(round(temp[i, 3], digits = 4), width = 15, nsmall = 4),
+  				  format(round(temp[i, 4], digits = 4), width = 19, nsmall = 4), "(entire cohort)"),
+  				  file = "")
+  		} else {
+                write(paste(format(temp[i, 1], width = 12, ),
+  				  format(round(temp[i, 2], digits = 4), width = 19, nsmall = 4),
+  				  format(round(temp[i, 3], digits = 4), width = 15, nsmall = 4),
+  				  format(round(temp[i, 4], digits = 4), width = 19, nsmall = 4)),
+  				  file = "")
+  		}
+            }
+  	    if (sp@win@type != "tail-oriented")
+              write(paste("        Overall",
+  			format(round(ratio$ologHR,      digits = 4),  nsmall = 4, width = 16), 
+              	format(round(ratio$ologHRSE,    digits = 4),  nsmall = 4, width = 15),
+  			format(round(exp(ratio$ologHR), digits = 4),  nsmall = 4, width = 19)),
+  			file = "")
+            cat("\n")
+
+          } else
+  	  if (family == "binomial"){
+            cat("\n")
+            write(paste("Risk differences"), file = "")
+            temp <- matrix(c(1:sp@nsubpop, round(est1$sObs - est$sObs, digits = 4), 
+              		round(sqrt(est1$sSE^2 + est$sSE^2), digits = 4)), ncol = 3)
+            write("                          Risk", file = "")
+            write("     Subpopulation      Difference      Std. Err.", 
+              file = "")
+            for (i in 1:sp@nsubpop) {
+  		if (sp@win@type == "tail-oriented" & i == overall_lbl){
+                write(paste(format(temp[i, 1], width = 12),
+  				  format(temp[i, 2], width = 19, nsmall = 4),
+  				  format(temp[i, 3], width = 15, nsmall = 4), "(entire cohort)"),
+  				  file = "")
+  		} else {
+                write(paste(format(temp[i, 1], width = 12), 
+  				  format(temp[i, 2], width = 19, nsmall = 4),
+  				  format(temp[i, 3], width = 15, nsmall = 4)),
+  				  file = "")
+  		}
+            }
+  	    if (sp@win@type != "tail-oriented")
+              write(paste("        Overall",
+  				format(round(est1$oObs - est$oObs, digits = 4), nsmall = 4, width = 16), 
+              		format(round(sqrt(est1$oSE^2 + est$oSE^2), digits = 4), nsmall = 4, width = 15)),
+  			file = "")
+            cat("\n")
+
+            write(paste("Odds Ratio"), file = "")
+            temp <- matrix(c(1:sp@nsubpop, 
+  					round(ratio$logHR,      digits = 4), 
+              			round(ratio$logHRSE,    digits = 4), 
+  					round(exp(ratio$logHR), digits = 4)), 
+  				ncol = 4)
+            write("                        log Odds", file = "")
+            write("     Subpopulation        Ratio          Std. Err.	    Odds Ratio", file = "")
+            for (i in 1:sp@nsubpop) {
+  		if (sp@win@type == "tail-oriented" & i == overall_lbl){
+                write(paste(format(temp[i, 1], width = 12), 
+  				  format(round(temp[i, 2], digits = 4), width = 19, nsmall = 4), 
+  				  format(round(temp[i, 3], digits = 4), width = 15, nsmall = 4),
+  				  format(round(temp[i, 4], digits = 4), width = 19, nsmall = 4), "(entire cohort)"),
+  				  file = "")
+  		} else {
+                write(paste(format(temp[i, 1], width = 12), 
+  				  format(round(temp[i, 2], digits = 4), width = 19, nsmall = 4), 
+  				  format(round(temp[i, 3], digits = 4), width = 15, nsmall = 4),
+  				  format(round(temp[i, 4], digits = 4), width = 19, nsmall = 4)), 
+  				  file = "")
+  		}
+            }
+  	    if (sp@win@type != "tail-oriented")
+              write(paste("        Overall",
+  				format(round(ratio$ologHR,     digits = 4), nsmall = 4, width = 16), 
+              		format(round(ratio$ologHRSE,   digits = 4), nsmall = 4, width = 15),
+  				format(round(exp(ratio$ologHR),digits = 4), nsmall = 4, width = 19)), 
+  			file = "")
+            cat("\n")
+
+          } else
+  	  if (family == "poisson"){
+            cat("\n")
+            write(paste("Effect differences"), file = "")
+            temp <- matrix(c(1:sp@nsubpop, 
+  				round(est1$sObs - est$sObs, digits = 4), 
+              		round(sqrt(est1$sSE^2 + est$sSE^2), digits = 4)), ncol = 3)
+            write("                         Effect ", file = "")
+            write("     Subpopulation      Difference      Std. Err.", 
+              file = "")
+            for (i in 1:sp@nsubpop) {
+  		if (sp@win@type == "tail-oriented" & i == overall_lbl){
+                write(paste(format(temp[i, 1], width = 12), 
+  				  format(temp[i, 2], width = 19, nsmall = 4), 
+  				  format(temp[i, 3], width = 15, nsmall = 4), "(entire cohort)"),
+  			  	  file = "")
+  		} else {
+                write(paste(format(temp[i, 1], width = 12), 
+  				  format(temp[i, 2], width = 19, nsmall = 4), 
+  				  format(temp[i, 3], width = 15, nsmall = 4)), 
+  				  file = "")
+  		}
+            }
+  	    if (sp@win@type != "tail-oriented")
+              write(paste("        Overall", 
+  				format(round(est1$oObs - est$oObs, digits = 4), nsmall = 4, width = 16), 
+              		format(round(sqrt(est1$oSE^2 + est$oSE^2), digits = 4), nsmall = 4, width = 15)), 
+  			file = "")
+            cat("\n")
+
+            write(paste("Relative    Effect "), file = "")
+            temp <- matrix(c(1:sp@nsubpop,  
+  				round(ratio$logHR,      digits = 4), 
+  				round(ratio$logHRSE,    digits = 4),
+  				round(exp(ratio$logHR), digits = 4)), 
+  				ncol = 4)
+            write("                           log", file = "")
+            write("     Subpopulation        Effect         Std. Err.        Relative Effect", 
+              file = "")
+            for (i in 1:sp@nsubpop) {
+  		if (sp@win@type == "tail-oriented" & i == overall_lbl){
+                write(paste(format(temp[i, 1], width = 12), 
+  				  format(temp[i, 2], width = 19, nsmall = 4), 
+  				  format(temp[i, 3], width = 15, nsmall = 4),
+  				  format(temp[i, 4], width = 19, nsmall = 4), "(entire cohort)"),
+  			 	  file = "")
+  		} else {
+                write(paste(format(temp[i, 1], width = 12), 
+  				  format(temp[i, 2], width = 19, nsmall = 4), 
+  				  format(temp[i, 3], width = 15, nsmall = 4),
+  				  format(temp[i, 4], width = 19, nsmall = 4)),
+  			 	  file = "")
+  		}
+            }
+  	    if (sp@win@type != "tail-oriented")
+              write(paste("        Overall", 
+  				format(round(ratio$ologHR,      digits = 4), nsmall = 4, width = 16), 
+              		format(round(ratio$ologHRSE,    digits = 4), nsmall = 4, width = 15),
+  				format(round(exp(ratio$ologHR), digits = 4), nsmall = 4, width = 19)), 
+  			file = "")
+            cat("\n")
+  	  }
+  	}
+  }
+}
+
+print.cov.GLM <- function(stobj, trts) {
+  if (!is.null(stobj@result)) {
+  	for (j in 1:(stobj@result$ntrts - 1)) {
+  	  ns <- stobj@subpop@nsubpop
+  	  if (stobj@subpop@win@type == "tail-oriented") ns <- ns - 1
+  	  cat("\n")
+  	  write(paste("The covariance matrix of the effect differences estimates for the",
+  		  ns, "subpopulations is:"), file = "")
+  	  write(paste("trt ", trts[j+1], "vs. trt ", trts[1]), file = "")
+      print(stobj@result$Res[[j]]$sigma)
+
+  	  cat("\n")
+  	  write(paste("The covariance matrix of the log effect ratios for the", 
+        ns, "subpopulations is:"), file = "")
+      print(stobj@result$Res[[j]]$HRsigma)
       cat("\n")
-      write("Effect differences and ratio estimates", file = "")
-	est1	  <- x@effect$TrtEff[[1]]
-
-	for (j in 2:x@effect$ntrts){
-	  cat("\n")
-	  write(paste("trt ", trts[j], "vs. trt ", trts[1]), file = "")
-
-
-	  est	  <- x@effect$TrtEff[[j]]
-	  ratio <- x@effect$Ratios[[j-1]]
-
-	  if (family == "gaussian"){
-          cat("\n")
-
-          write(paste("Effect differences"), file = "")
-          temp <- matrix(c(1:sp@nsubpop, round(est1$sObs - est$sObs, digits = 4), 
-            round(sqrt(est1$sSE^2 + est$sSE^2), digits = 4)), ncol = 3)
-          write("                          Effect", file = "")
-          write("     Subpopulation      Difference      Std. Err.", 
-            file = "")
-          for (i in 1:sp@nsubpop) {
-		if (sp@win@type == "tail-oriented" & i == (length(sp@win@r1)+1)){
-              write(paste(format(temp[i, 1], width = 12),
-				  format(temp[i, 2], width = 19, nsmall = 4),
-				  format(temp[i, 3], width = 15, nsmall = 4), "Overall"),
-				  file = "")
-		} else {
-              write(paste(format(temp[i, 1], width = 12),
-				  format(temp[i, 2], width = 19, nsmall = 4),
-				  format(temp[i, 3], width = 15, nsmall = 4)), 
-				  file = "")
-		}
-          }
-	    if (sp@win@type != "tail-oriented")
-            write(paste("        Overall",
-			format(round(est1$oObs - est$oObs, digits = 4), nsmall = 4, width = 16), 
-            	format(round(sqrt(est1$oSE^2 + est$oSE^2), digits = 4), nsmall = 4, width = 15)),
-			file = "")
-          cat("\n")
-
-          write(paste("Effect ratios"), file = "")
-          temp <- matrix(c(1:sp@nsubpop, round(ratio$logHR, digits = 4), 
-            		round(ratio$logHRSE, digits = 4), round(exp(ratio$logHR), digits=4)), ncol = 4)	
-          write("                          Effect", file = "")
-          write("     Subpopulation      log Effect Ratio  Std. Err.	    Effect Ratio", file = "")
-          for (i in 1:sp@nsubpop) {
-		if (sp@win@type == "tail-oriented" & i == (length(sp@win@r1)+1)){
-              write(paste(format(temp[i, 1], width = 12, ),
-				  format(round(temp[i, 2], digits = 4), width = 19, nsmall = 4),
-				  format(round(temp[i, 3], digits = 4), width = 15, nsmall = 4),
-				  format(round(temp[i, 4], digits = 4), width = 19, nsmall = 4), "Overall"),
-				  file = "")
-		} else {
-              write(paste(format(temp[i, 1], width = 12, ),
-				  format(round(temp[i, 2], digits = 4), width = 19, nsmall = 4),
-				  format(round(temp[i, 3], digits = 4), width = 15, nsmall = 4),
-				  format(round(temp[i, 4], digits = 4), width = 19, nsmall = 4)),
-				  file = "")
-		}
-          }
-	    if (sp@win@type != "tail-oriented")
-            write(paste("        Overall",
-			format(round(ratio$ologHR,      digits = 4),  nsmall = 4, width = 16), 
-            	format(round(ratio$ologHRSE,    digits = 4),  nsmall = 4, width = 15),
-			format(round(exp(ratio$ologHR), digits = 4),  nsmall = 4, width = 19)),
-			file = "")
-          cat("\n")
-
-        } else
-	  if (family == "binomial"){
-          cat("\n")
-          write(paste("Risk differences"), file = "")
-          temp <- matrix(c(1:sp@nsubpop, round(est1$sObs - est$sObs, digits = 4), 
-            		round(sqrt(est1$sSE^2 + est$sSE^2), digits = 4)), ncol = 3)
-          write("                          Risk", file = "")
-          write("     Subpopulation      Difference      Std. Err.", 
-            file = "")
-          for (i in 1:sp@nsubpop) {
-		if (sp@win@type == "tail-oriented" & i == (length(sp@win@r1)+1)){
-              write(paste(format(temp[i, 1], width = 12),
-				  format(temp[i, 2], width = 19, nsmall = 4),
-				  format(temp[i, 3], width = 15, nsmall = 4), "Overall"),
-				  file = "")
-		} else {
-              write(paste(format(temp[i, 1], width = 12), 
-				  format(temp[i, 2], width = 19, nsmall = 4),
-				  format(temp[i, 3], width = 15, nsmall = 4)),
-				  file = "")
-		}
-          }
-	    if (sp@win@type != "tail-oriented")
-            write(paste("        Overall",
-				format(round(est1$oObs - est$oObs, digits = 4), nsmall = 4, width = 16), 
-            		format(round(sqrt(est1$oSE^2 + est$oSE^2), digits = 4), nsmall = 4, width = 15)),
-			file = "")
-          cat("\n")
-
-          write(paste("Odds Ratio"), file = "")
-          temp <- matrix(c(1:sp@nsubpop, 
-					round(ratio$logHR,      digits = 4), 
-            			round(ratio$logHRSE,    digits = 4), 
-					round(exp(ratio$logHR), digits = 4)), 
-				ncol = 4)
-          write("                        log Odds", file = "")
-          write("     Subpopulation        Ratio          Std. Err.	    Odds Ratio", file = "")
-          for (i in 1:sp@nsubpop) {
-		if (sp@win@type == "tail-oriented" & i == (length(sp@win@r1)+1)){
-              write(paste(format(temp[i, 1], width = 12), 
-				  format(round(temp[i, 2], digits = 4), width = 19, nsmall = 4), 
-				  format(round(temp[i, 3], digits = 4), width = 15, nsmall = 4),
-				  format(round(temp[i, 4], digits = 4), width = 19, nsmall = 4), "Overall"),
-				  file = "")
-		} else {
-              write(paste(format(temp[i, 1], width = 12), 
-				  format(round(temp[i, 2], digits = 4), width = 19, nsmall = 4), 
-				  format(round(temp[i, 3], digits = 4), width = 15, nsmall = 4),
-				  format(round(temp[i, 4], digits = 4), width = 19, nsmall = 4)), 
-				  file = "")
-		}
-          }
-	    if (sp@win@type != "tail-oriented")
-            write(paste("        Overall",
-				format(round(ratio$ologHR,     digits = 4), nsmall = 4, width = 16), 
-            		format(round(ratio$ologHRSE,   digits = 4), nsmall = 4, width = 15),
-				format(round(exp(ratio$ologHR),digits = 4), nsmall = 4, width = 19)), 
-			file = "")
-          cat("\n")
-
-        } else
-	  if (family == "poisson"){
-          cat("\n")
-          write(paste("Effect differences"), file = "")
-          temp <- matrix(c(1:sp@nsubpop, 
-				round(est1$sObs - est$sObs, digits = 4), 
-            		round(sqrt(est1$sSE^2 + est$sSE^2), digits = 4)), ncol = 3)
-          write("                         Effect ", file = "")
-          write("     Subpopulation      Difference      Std. Err.", 
-            file = "")
-          for (i in 1:sp@nsubpop) {
-		if (sp@win@type == "tail-oriented" & i == (length(sp@win@r1)+1)){
-              write(paste(format(temp[i, 1], width = 12), 
-				  format(temp[i, 2], width = 19, nsmall = 4), 
-				  format(temp[i, 3], width = 15, nsmall = 4), "Overall"),
-			  	  file = "")
-		} else {
-              write(paste(format(temp[i, 1], width = 12), 
-				  format(temp[i, 2], width = 19, nsmall = 4), 
-				  format(temp[i, 3], width = 15, nsmall = 4)), 
-				  file = "")
-		}
-          }
-	    if (sp@win@type != "tail-oriented")
-            write(paste("        Overall", 
-				format(round(est1$oObs - est$oObs, digits = 4), nsmall = 4, width = 16), 
-            		format(round(sqrt(est1$oSE^2 + est$oSE^2), digits = 4), nsmall = 4, width = 15)), 
-			file = "")
-          cat("\n")
-
-          write(paste("Relative    Effect "), file = "")
-          temp <- matrix(c(1:sp@nsubpop,  
-				round(ratio$logHR,      digits = 4), 
-				round(ratio$logHRSE,    digits = 4),
-				round(exp(ratio$logHR), digits = 4)), 
-				ncol = 4)
-          write("                           log", file = "")
-          write("     Subpopulation        Effect         Std. Err.        Relative Effect", 
-            file = "")
-          for (i in 1:sp@nsubpop) {
-		if (sp@win@type == "tail-oriented" & i == (length(sp@win@r1)+1)){
-              write(paste(format(temp[i, 1], width = 12), 
-				  format(temp[i, 2], width = 19, nsmall = 4), 
-				  format(temp[i, 3], width = 15, nsmall = 4),
-				  format(temp[i, 4], width = 19, nsmall = 4), "Overall"),
-			 	  file = "")
-		} else {
-              write(paste(format(temp[i, 1], width = 12), 
-				  format(temp[i, 2], width = 19, nsmall = 4), 
-				  format(temp[i, 3], width = 15, nsmall = 4),
-				  format(temp[i, 4], width = 19, nsmall = 4)),
-			 	  file = "")
-		}
-          }
-	    if (sp@win@type != "tail-oriented")
-            write(paste("        Overall", 
-				format(round(ratio$ologHR,      digits = 4), nsmall = 4, width = 16), 
-            		format(round(ratio$ologHRSE,    digits = 4), nsmall = 4, width = 15),
-				format(round(exp(ratio$ologHR), digits = 4), nsmall = 4, width = 19)), 
-			file = "")
-          cat("\n")
-	  }
-	}
-
+  	}
+  }
 }
 
-print.cov.GLM <- function(stobj, trts){
-    if (!is.null(stobj@result)){
-	for (j in 1:(stobj@result$ntrts-1)){
-	  ns <- stobj@subpop@nsubpop
-	  if (stobj@subpop@win@type == "tail-oriented") ns <- ns-1
-	  cat("\n")
-	  write(paste("The covariance matrix of the effect differences estimates for the",
-	  		  ns, "subpopulations is:"), file = "")
-	  write(paste("trt ", trts[j+1], "vs. trt ", trts[1]), file = "")
-        print(stobj@result$Res[[j]]$sigma)
+print.stat.GLM <- function(stobj, trts) {
+  if (!is.null(stobj@result)) {
+  	for (j in 1:(stobj@result$ntrts-1)) {
 
-	  cat("\n")
-	  write(paste("The covariance matrix of the log effect ratios for the", 
-          		ns, "subpopulations is:"), file = "")
-        print(stobj@result$Res[[j]]$HRsigma)
-        cat("\n")
+  	  t <- stobj@result$Res[[j]]
+  	  cat("\n")
+      write(paste("Supremum test results"), file = "")
+  	  write(paste("trt ", trts[j + 1], "vs. trt", trts[1]), file = "")
 
-	}
-    }
+  	  write(paste("Interaction p-value based on effect differences estimates:", t$pvalue), file = "")
+      cat("\n")
+  	  write(paste("Chi-square Interaction p-value based on effect differences estimates:", t$chi2pvalue), file = "")
 
-}
-
-print.stat.GLM <- function(stobj, trts){
-    if (!is.null(stobj@result)){
-	for (j in 1:(stobj@result$ntrts-1)){
-
-	  t <- stobj@result$Res[[j]]
-	  cat("\n")
-        write(paste("Supremum test results"), file = "")
-	  write(paste("trt ", trts[j + 1], "vs. trt", trts[1]), file = "")
-
-	  write(paste("Interaction p-value based on effect differences estimates:", t$pvalue), file = "")
-        cat("\n")
-	  write(paste("Chi-square Interaction p-value based on effect differences estimates:", t$chi2pvalue), file = "")
-
-	  cat("\n")
-	}
-    }
-
+  	  cat("\n")
+  	}
+  }
 }
 
 setMethod("print",
-	    signature="stmodelGLM",
-	    definition=function(x, stobj, estimate=TRUE, cov=TRUE, test=TRUE, ...){
+  signature = "stmodelGLM",
+  definition = function(x, stobj, estimate = TRUE, cov = TRUE, test = TRUE, ...){
+    ntrts <- length(x@trts)
 
 		#
 		#  1. estimates
 		#
-	      if (estimate){
+    if (estimate) {
 		  print.estimate.GLM(stobj, x@glm, x@trts)
-      	}
+  	}
 
-		if (!is.null(stobj@result)){
-  		  #
+		if (!is.null(stobj@result)) {
+		  #
 		  #   2. covariance matrices
 		  #
-    		  if (cov){
+		  if (cov & ntrts > 1) {
 		    print.cov.GLM(stobj, x@trts)
  		  }
   
 		  #
 		  #   3. Supremum test and Chi-square test results
 		  #
-		  if (test){
+		  if (test & ntrts > 1) {
 		    print.stat.GLM(stobj, x@trts)
 		  }
 		}
- 	 }
+ }
 )
 
 # constructor function for stmodelGLM
-stepp.GLM <- function(coltrt, trts, colY, MM=NULL, glm, debug=0){
-	model <- new("stmodelGLM", coltrt=coltrt, trts=trts, colY=colY, MM=MM, glm=glm, debug=debug)
+stepp.GLM <- function(coltrt, trts, colY, MM = NULL, glm, link){
+	model <- new("stmodelGLM", coltrt = coltrt, trts = trts, colY = colY, MM = MM, glm = glm, link = link)
 	return(model)
 }
-
-

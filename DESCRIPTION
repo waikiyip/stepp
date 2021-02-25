@@ -1,8 +1,8 @@
 Package: stepp
 Type: Package
 Title: Subpopulation Treatment Effect Pattern Plot (STEPP)
-Version: 3.2.2
-Date: 2020-10-01
+Version: 3.2.3
+Date: 2021-02-24
 Author: Wai-ki Yip [aut, cre],
     Ann Lazar [ctb],
     David Zahrieh [ctb],

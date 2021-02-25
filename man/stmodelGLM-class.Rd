@@ -35,8 +35,7 @@
     \item{\code{glm}:}{Object of class \code{"character"} \cr
 	 the glm to be used for analysis: "gaussian", "binomial", "poisson"}
     \item{\code{link}:}{Object of class \code{"character"} \cr
-	the link function; reserved for future use } \cr
-    \item{\code{debug}:}{Object of class \code{"numeric"}}
+	the link function; reserved for future use }
   }
 }
 

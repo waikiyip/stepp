@@ -16,6 +16,43 @@ setClass("steppes",
   prototype = c(NULL, NULL, NULL, NULL, NULL, NULL)
 )
 
+setMethod("initialize", "steppes",
+  function(.Object, subpop, model, effect, result, nperm, ...) {
+    if (missing(subpop)) {
+      subpop <- new("stsubpop")
+    }
+    if (missing(model)) {
+      model <- new("stmodelKM")
+    }
+    if (missing(effect)) {
+      effect <- list()
+    }
+    if (missing(result)) {
+      result <- list()
+    }
+    if (missing(nperm)) {
+      nperm <- 0
+    }
+    .Object@subpop <- subpop
+    .Object@model <- model
+    .Object@effect <- effect
+    .Object@result <- result
+    .Object@nperm <- nperm
+    if (!validObject(.Object)) stop("")
+    callNextMethod(.Object, ...)
+  }
+)
+
+setValidity("steppes", 
+  function(object) {
+    status <- TRUE
+
+    # add conditions to verify
+
+    return(status)
+  }
+)
+
 setMethod("estimate",
   signature = "steppes",
   definition = function(.Object, sp, model) {
@@ -30,11 +67,12 @@ setMethod("test",
   signature = "steppes",
   definition = function(.Object, nperm=100, showstatus=TRUE) {
     if (is.null(.Object@subpop) | is.null(.Object@model)) {
-      print("You have to estimate the effect first before you can test for interaction!")
+      print("You need to estimate the effects first before testing for interaction.")
     }
     else {
+      if (length(.Object@model@trts) == 1) nperm <- 0
       .Object@nperm  <- nperm
-      .Object@result <- test(.Object@model, nperm, .Object@subpop, .Object@effect, showstatus = TRUE)
+      .Object@result <- test(.Object@model, nperm, .Object@subpop, .Object@effect, showstatus = showstatus)
     }
     return(.Object)
   }
@@ -202,7 +240,7 @@ setGeneric("edge.boot", function(.Object, criteria, edge, j, seed, nsample, show
 
 setMethod("edge.boot",
   signature = "steppes",
-  definition = function(.Object, criteria, edge, j=2, seed=17, nsample=1000, showstatus=TRUE, debug=0) {
+  definition = function(.Object, criteria, edge, j=2, seed=17, nsample=1000, showstatus=showstatus, debug=0) {
     ori.subpop <- .Object@subpop
     npatients  <- dim(ori.subpop@subpop)[1]
     bmatrix    <- matrix(0, nrow=npatients, ncol=nsample)
@@ -296,44 +334,44 @@ setMethod("summary",
   definition = function(object) {
     summary(object@subpop)
 
-      # print number of patients in each subpopulation for each treatment
-      if (object@subpop@init){
-        subpop   <- object@subpop
-        nsubpop  <- subpop@nsubpop
-        colvar   <- subpop@colvar
-        minc     <- subpop@minc
-        maxc     <- subpop@maxc
-      
-        model    <- object@model
-        trts     <- model@trts
-        coltrt   <- model@coltrt
-        ntrts    <- length(trts)
-        txassign <- rep(-1, length(model@coltrt))
-     
-        for (j in 1:ntrts) txassign[which(coltrt == trts[j])] <- j
-      
-    cat("\n")
-        write("Treatments Sample Size Information (with only specified treatments)", file="")
-        trttitle <- paste(paste("trt",trts),"  ", collapse="")
-        write(paste("      Subpopulation    ", trttitle, "Total"), file="")
-        for (i in 1:nsubpop){
-          trtj <- rep(0, ntrts)
-          for (j in 1:ntrts){
-              subpopj <- colvar[colvar >= minc[i] & colvar <= maxc[i] & txassign == j]
-              trtj[j] <- trtj[j] + length(subpopj)
-          }
-      subtrt <- paste(format(trtj,width=8),sep="",collapse="")
-      if (subpop@win@type=="tail-oriented" & i==(length(subpop@win@r1)+1)){
-            write(paste(format(i,width=12), "     ", subtrt, "     ", sum(trtj), "Entire Cohort"),file="")
-      } else {
-            write(paste(format(i,width=12), "     ", subtrt, "     ", sum(trtj)),file="")
-      }
+    # print number of patients in each subpopulation for each treatment
+    if (object@subpop@init) {
+      subpop   <- object@subpop
+      nsubpop  <- subpop@nsubpop
+      colvar   <- subpop@colvar
+      minc     <- subpop@minc
+      maxc     <- subpop@maxc
+    
+      model    <- object@model
+      trts     <- model@trts
+      coltrt   <- model@coltrt
+      ntrts    <- length(trts)
+      txassign <- rep(-1, length(model@coltrt))
+   
+      for (j in 1:ntrts) txassign[which(coltrt == trts[j])] <- j
+    
+      cat("\n")
+      write("Treatments Sample Size Information (with only specified treatments)", file="")
+      trttitle <- paste(paste("trt",trts),"  ", collapse="")
+      write(paste("      Subpopulation    ", trttitle, "Total"), file="")
+      for (i in 1:nsubpop) {
+        trtj <- rep(0, ntrts)
+        for (j in 1:ntrts) {
+          subpopj <- colvar[colvar >= minc[i] & colvar <= maxc[i] & txassign == j]
+          trtj[j] <- trtj[j] + length(subpopj)
         }
-          cat("\n")
-        write("(To display subpopulation distribution together with the first STEPP Plot, use the subplot option in STEPP_Plot.)",file="")
+        subtrt <- paste(format(trtj,width=8),sep="",collapse="")
+        if (subpop@win@type=="tail-oriented" & i==(length(subpop@win@r1)+1)){
+          write(paste(format(i,width=12), "     ", subtrt, "     ", sum(trtj), "Entire Cohort"),file="")
+        } else {
+          write(paste(format(i,width=12), "     ", subtrt, "     ", sum(trtj)),file="")
+        }
       }
       cat("\n")
+      write("(To display subpopulation distribution together with the first STEPP Plot, use the 'subplot' option in the plot function.)",file="")
     }
+    cat("\n")
+  }
 )
 
 setMethod("print",
@@ -345,14 +383,16 @@ setMethod("print",
     for (j in 1:ntrts) {
       nj <- sum(x@model@coltrt==x@model@trts[j])
       n  <- n + nj
-      write(paste0("Sample size in treatment ", x@model@trts[j], ": ", nj), file="")
+      if (ntrts > 1) {
+        write(paste0("Sample size in treatment ", x@model@trts[j], ": ", nj), file="")
+      }
     }
     write(paste0("Total sample size (excluding missing data): ", n), file="")
     print(x@model, x, estimate, cov, test, ...)
 
-    if (test)
+    if (test & ntrts > 1)
       write("Note: The p-values are not adjusted for multiple testing.",file="")
-      }
+    }
 )
 
 #
@@ -361,22 +401,23 @@ setMethod("print",
   nlas, alpha, pointwise, diff, ci, pv, showss, ylimit, dev,
   together, noyscale, rug, lsty, marker, subset, subplot, ...) {
 
-      Result  <- x@result$Res
-      nperm   <- x@nperm
-      TrtEff  <- x@effect$TrtEff
-      Ratios  <- x@effect$Ratios
-      nsubpop <- x@subpop@nsubpop
-      npatsub <- x@subpop@npatsub
-      medians <- x@subpop@medianz
-      minz    <- x@subpop@minz
-      minc    <- x@subpop@minc
-      maxz    <- x@subpop@maxz
-      maxc    <- x@subpop@maxc
-      colvar  <- x@subpop@colvar
-      r1      <- x@subpop@win@r1
-      r2      <- x@subpop@win@r2
-      coltrt  <- x@model@coltrt
-      trts    <- x@model@trts
+      Result        <- x@result$Res
+      nperm         <- x@nperm
+      TrtEff        <- x@effect$TrtEff
+      Ratios        <- x@effect$Ratios
+      nsubpop       <- x@subpop@nsubpop
+      npatsub       <- x@subpop@npatsub
+      medians       <- x@subpop@medianz
+      minz          <- x@subpop@minz
+      minc          <- x@subpop@minc
+      maxz          <- x@subpop@maxz
+      maxc          <- x@subpop@maxc
+      colvar        <- x@subpop@colvar
+      r1            <- x@subpop@win@r1
+      r2            <- x@subpop@win@r2
+      coltrt        <- x@model@coltrt
+      trts          <- x@model@trts
+      issinglegroup <- (x@effect$ntrts == 1)
 
       #  set up the defaults
       ntrts     <- length(trts)
@@ -384,7 +425,11 @@ setMethod("print",
       for (j in 1:ntrts) txassign[which(coltrt == trts[j])] <- j
 
           if (is.null(subset)) subset <- rep(1, ntrts)
-          if (nperm==0) pv <- FALSE # no pvalue displayed if permutation test not done
+          if (length(nperm) == 0) {
+            pv <- FALSE # no pvalue displayed if permutation test not done
+          } else if (nperm == 0) {
+            pv <- FALSE # no pvalue displayed if permutation test not done
+          }
 
       # Apply graphics defaults for lsty, marker
       # Check to make sure it is consistent
@@ -400,14 +445,15 @@ setMethod("print",
       if (sum(subset) < 1) {
         print("Subset must have at least one treatment specified.")
         stop()
-      } 
-          n <- 3
-          if (class(x@model) == "stmodelGLM" ) noyscale <- TRUE 
-          if (together | (subset[1] == 1 & sum(subset) == 1)) n <- 1
+      }
+      n <- 3
+      if (class(x@model) == "stmodelGLM" ) noyscale <- TRUE
+      if (together | (subset[1] == 1 & sum(subset) == 1)) n <- 1
+      if (!diff) n <- 1
 
       if (dev == "") graphics.off()
 
-          for(i in 1:n) {
+      for (i in 1:n) {
         if (dev == "") {
           if (!rstudioapi::isAvailable()) {
             dev.new()
@@ -419,7 +465,6 @@ setMethod("print",
             postscript(file = fname)
         } 
         else
-
         if (dev == "eps") {
             fname = paste("SteppPlot", as.character(i), ".eps", sep = "")
             postscript(file = fname)
@@ -449,9 +494,9 @@ setMethod("print",
             fname = paste("SteppPlot", as.character(i), ".jpeg", sep = "")
             jpeg(filename = fname)
         } 
-              }
+      }
 
-          devlst <- dev.list()
+      devlst <- dev.list()
 
       #   generate the first stepp plot
       #     STEPP analysis of treatment effect as measured
@@ -483,11 +528,15 @@ setMethod("print",
       }
       for (i in 1:nsubpop) ssize[i] <- paste(c("(n=", tpatsub[i], ")"), collapse = "")  
       
-      p <- "supremum pv="
-      for (j in 2:ntrts) {
-        if (subset[j] == 1) {
-          p <- paste(c(p, Result[[j - 1]]$pvalue, ";"), collapse = "")
+      if (!issinglegroup) {
+        p <- "supremum pv = "
+        for (j in 2:ntrts) {
+          if (subset[j] == 1) {
+            p <- paste(c(p, Result[[j - 1]]$pvalue), collapse = "")
+          }
         }
+      } else {
+        p <- ""
       }
 
       # generate subpopulation distribution subplot if needed
@@ -534,8 +583,10 @@ setMethod("print",
               mtext(xlabel, side = 1, line = 2)
         }
 
+            if (!issinglegroup) {
               legend(min(xvalues), legendy, pch = marker[sell], lty = lsty[sell], lwd = 2, 
-         col = color[sell], pt.bg = color[sell], legend = tlegend[sell], bty = "n")
+               col = color[sell], pt.bg = color[sell], legend = tlegend[sell], bty = "n")
+            }
     
               if (pv) {
         if (is.na(at)) mtext(p, side = 1, at = (min(xvalues) + 0.2 * (max(xvalues) - min(xvalues))), line = pline)
@@ -546,7 +597,7 @@ setMethod("print",
 
       # WKY 
       # generate subpopulation distribution subplot
-      if (subplot){
+      if (subplot) {
         par(fig=c(0,1,0.5,1),new=TRUE)
         #par(fig=c(0,1,0,0.45),new=TRUE)
         n.y <- length(xvalues[group==1])
@@ -566,7 +617,7 @@ setMethod("print",
 
       }
 
-              if(diff){
+      if (diff & !issinglegroup) {
         # pointwise is specified, generate two additional plots
         #
         subset[1] <- 1      # make sure the baseline trt is included
@@ -578,8 +629,11 @@ setMethod("print",
 
         if (!together & !rstudioapi::isAvailable()) dev.set(devlst[2])
 
-            if(pointwise) zcrit <- qnorm(1-alpha/2)
-            else zcrit <- qnorm(1-alpha/(2*nsubpop))
+        if (pointwise) {
+          zcrit <- qnorm(1 - alpha/2)
+        } else {
+          zcrit <- qnorm(1 - alpha/(2*nsubpop))
+        }
 
         skmObs   <- NULL
         se       <- NULL
@@ -664,7 +718,7 @@ setMethod("print",
         }
 
       if (!together & !rstudioapi::isAvailable()) dev.set(devlst[3])
-          if (class(x@model) == "stmodelKM" | class(x@model) == "stmodelCI" | class(x@model) == "stmodelCOX"){      
+          if (class(x@model) == "stmodelKM" | class(x@model) == "stmodelCI" | class(x@model) == "stmodelCOX"){
               #Rpvalue<- x@result$HRpvalue
               #logR   <- x@effect$logHR
               #logRSE <- x@effect$logHRSE
@@ -688,10 +742,10 @@ setMethod("print",
           text2  <- "Risks Ratio"
         }
       }
-        p <- "supremum pv="
+        p <- "supremum pv = "
         for (j in 2:ntrts){
           if (subset[j] == 1){
-                p <- paste(c(p, Result[[j - 1]]$HRpvalue, ";"), collapse = "")
+                p <- paste(c(p, Result[[j - 1]]$HRpvalue), collapse = "")
           }
         }
               par(mfrow = c(1, 1), omi = c(0.5, 0.5, 0.5, 0.5))
@@ -779,7 +833,7 @@ setMethod("plot",
             #   a vector containing the line colors for trts
     ylabel = "Specify Timepoint & Endpoint",    # label for the y-axis
     xlabel = "Subpopulations by Median Covariate",  # label for the x-axis
-        ncex = 0.7,     #   the size of the text for the sample size annotation
+    ncex = 0.7,     #   the size of the text for the sample size annotation
     tlegend = c("Specify 1st Treatment", "Specify 2nd Treatment"),
             #   a vector containing the treatment labels, 1st and 2nd trt, respectively
     nlas = 0,     #   the las paramter (0,1,2,3) - the orientation of the sample size annotation
@@ -794,7 +848,7 @@ setMethod("plot",
     ylimit = c(0,100,-100,100,0,3),
             #   y limits for the 3 graphs
     dev = "",     #   graphics device for output; default to Null Device
-        together = FALSE,   #   generate the plots together; default to No
+    together = FALSE,   #   generate the plots together; default to No
     noyscale = FALSE,   #   do not scale y axis to %
     rug = FALSE,    #   put a rug plot for each
     at = NA,      #   centering position for pline
@@ -811,11 +865,11 @@ setMethod("plot",
 
 # constructor and access functions for steppes
 
-# 1. estimate the treatment effect and do the permutation test
+# 1. estimate treatment effects and perform permutation test
 stepp.test <- function(subpop, model, nperm, showstatus = TRUE) {
   result <- new("steppes")
   result <- estimate(result, subpop, model)
-  result <- test(result, nperm, showstatus=showstatus)
+  result <- test(result, nperm, showstatus = showstatus)
   return(result)
 }
 

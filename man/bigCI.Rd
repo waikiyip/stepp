@@ -58,7 +58,7 @@ summary(subp)					   # summary of the subpopulations
 smodel  <- new("stmodelCI", coltrt=rxgroup, trts=c(1,2), coltime=time, coltype=evt, timePoint=4)
 
 statCI  <- new("steppes")		  # create a test object based on subpopulation and window
-statCI  <- estimate(statCI, subp, smodel) # estimate the subpo10ulation results
+statCI  <- estimate(statCI, subp, smodel) # estimate the subpopulation results
 # Warning: In this example, the permutations have been set to 0 to allow the function
 # to finish in a short amount of time.  IT IS RECOMMEND TO USE AT LEAST 2500 PERMUTATIONS TO 
 # PROVIDE STABLE RESULTS.
