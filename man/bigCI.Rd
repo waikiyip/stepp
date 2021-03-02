@@ -69,7 +69,7 @@ plot(statCI, ncex=0.65, legendy=30, pline=-15.5, color=c("blue","gold"),
         pointwise=FALSE, 
         xlabel="Median Ki-67 LI in Subpopulation (\% immunoreactivity)",
         ylabel="4-year Cumulative Incidence", 
-        tlegend=c("Taxmoxifen", "Letrozole"), nlas=3)
+        tlegend=c("Tamoxifen", "Letrozole"), nlas=3)
 
 }
 
