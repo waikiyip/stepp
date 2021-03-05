@@ -146,7 +146,7 @@ generate.all <- function(sp, win, covariate, coltype = NULL, coltrt = NULL, trts
     # insufficient events to satisfy E2.
     #
     if (I1[1] >= length(covariate)) {
-      obsInitialSubpopCreationFailures <- obsInitialSubpopCreationFailures + 1
+      # obsInitialSubpopCreationFailures <- obsInitialSubpopCreationFailures + 1
       print(paste("Warning: Insufficient Type 1 Events found creating initial subpopulation (",
                   "Trt0=", cumtypevalsTrt0[length(cumtypevalsTrt0)],
                    " Trt1=", cumtypevalsTrt1[length(cumtypevalsTrt1)], ")", sep=""))
@@ -201,7 +201,7 @@ generate.all <- function(sp, win, covariate, coltype = NULL, coltrt = NULL, trts
     # Make sure there are enough subpopulations
     #
     if (nsubpop < minsubpops) {
-      obsInsufficientSubpopsErrors <- obsInsufficientSubpopsErrors + 1
+      # obsInsufficientSubpopsErrors <- obsInsufficientSubpopsErrors + 1
       print(paste("Warning: too few subpopulations (", nsubpop, ")", sep = ""))
       stop("Throwing out dataset.")
     }
@@ -300,6 +300,9 @@ setGeneric("generate", function(.Object, win, covariate, coltype, coltrt, trts, 
 setMethod("generate", 
   signature="stsubpop",
   definition = function(.Object, win, covariate, coltype, coltrt, trts, minsubpops) {
+    if (missing(minsubpops)) {
+      minsubpops <- 2
+    }
     .Object <- generate.all(.Object, win, covariate, coltype, coltrt, trts, minsubpops)
     return(.Object)
   }

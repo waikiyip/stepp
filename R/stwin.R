@@ -27,11 +27,15 @@ setMethod("initialize", "stwin",
     if (missing(type)) {
       type <- "sliding"
     }
-    if (missing(r1)) {
+    if (missing(r1) & missing(e1)) {
       r1 <- 5
+    } else if (missing(r1) & !missing(e1)) {
+      r1 <- NULL
     }
-    if (missing(r2)) {
+    if (missing(r2) & missing(e2)) {
       r2 <- 20
+    } else if (missing(r2) & !missing(e2)) {
+      r2 <- NULL
     }
     if (missing(e1)) {
       e1 <- NULL

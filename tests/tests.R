@@ -19,7 +19,7 @@ cov     <- bigKM$ki67
 #   timest = 4, noperm = noperm, minRequiredSubpops = 5, legendy = 30,
 #   pline = -2.5, color = c("red", "black"), ylabel = "4 year DFS",
 #   xlabel = "Subpopulations by Median Ki-67", ncex = 0.7,
-#   tlegend = c("Tamoxifen", "Letrozole"), nlas = 3, alpha = 0.05,
+#   tlegend = c(Letrozole", "Tamoxifen"), nlas = 3, alpha = 0.05,
 #   pointwise = FALSE)
 
 # generate event-based windows
@@ -42,7 +42,7 @@ print(resCI_e)
 plot(resCI_e, legendy = 50,
      pline = -2.5, color = c("red", "black"), ylabel = "4 year DFS",
      xlabel = "Subpopulations by Median Ki-67", ncex = 0.7,
-     tlegend = c("Tamoxifen", "Letrozole"), nlas = 3, alpha = 0.05,
+     tlegend = c("Letrozole", "Tamoxifen"), nlas = 3, alpha = 0.05,
      pointwise = FALSE)
 
 # estimate and test the KM model
@@ -57,7 +57,7 @@ resKM_e <- test(resKM_e, noperm)
 print(resKM_e)
 plot(resKM_e, ylabel = "4 year DFS",
      xlabel = "Subpopulations by Median Ki-67", ncex = 0.7,
-     tlegend = c("Tamoxifen", "Letrozole"), nlas = 3, alpha = 0.05)
+     tlegend = c("Letrozole", "Tamoxifen"), nlas = 3, alpha = 0.05)
 
 ### Example 2 ###
 
@@ -215,7 +215,7 @@ plot(statKM, ncex=0.65, legendy=30, pline=-15.5, color=c("blue","gold"),
      pointwise=FALSE, 
      xlabel="Median Ki-67 LI in Subpopulation (% immunoreactivity)",
      ylabel="4-year Disease Free Survival", 
-     tlegend=c("Tamoxifen", "Letrozole"), nlas=3)
+     tlegend=c("Letrozole", "Tamoxifen"), nlas=3)
 
 ### Example for single group analysis ###
 library(stepp)

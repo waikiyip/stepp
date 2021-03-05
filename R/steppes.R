@@ -555,9 +555,9 @@ setMethod("print",
           else yl   <- ylimit[1:2]
 
           if (noyscale)
-        plot(xvalues, skmObs, axes = TRUE, xaxt="n", ylim = yl, ylab = ylabel, xlab = "")
+        plot(xvalues, skmObs, axes = TRUE, xaxt="n", ylim = yl, ylab = ylabel, xlab = "", type = "n")
           else
-            plot(xvalues, skmObs, axes = FALSE, ylim = yl, ylab = ylabel, xlab = "")
+            plot(xvalues, skmObs, axes = FALSE, ylim = yl, ylab = ylabel, xlab = "", type = "n")
 
       for (j in 1:ncurves) {
             points(xvalues[group == j], skmObs[group == j], lty = lsty[sell][j], lwd = 2, pch = marker[sell][j], type = "o",
@@ -566,7 +566,7 @@ setMethod("print",
 
           axis(1, at = xvalues, font = 1)
 
-          if (!noyscale) axis(2, at = c(0, (0:5) * 20), font = 1)
+          if (!noyscale) axis(2, at = c(0, (0:10) * 10), font = 1)
  
           if (nlas != 3 & nlas != 2) {
               if (showss) {
@@ -665,9 +665,11 @@ setMethod("print",
             else yl <- ylimit[3:4]
         
         if (noyscale)
-                plot(xvalues, skmObs, axes = TRUE, xaxt="n", ylim = yl, ylab = paste("Difference in",ylabel), xlab = "")
+          plot(xvalues, skmObs, axes = TRUE, xaxt="n", ylim = yl, ylab = paste("Difference in",ylabel), xlab = "",
+            type = "n")
         else 
-                plot(xvalues, skmObs, axes = FALSE, ylim = yl, ylab = paste("Difference in",ylabel), xlab = "")
+          plot(xvalues, skmObs, axes = FALSE, ylim = yl, ylab = paste("Difference in",ylabel), xlab = "",
+            type = "n")
 
         for (j in 1:ndcurves){
               points(xvalues[group == j], skmObs[group == j], lty = lsty[sell][j+1], lwd = 2, pch = marker[sell][j+1], 
@@ -696,7 +698,7 @@ setMethod("print",
 
                 lines(c(min(xvalues),max(xvalues)),c(0,0),lty=1)
                 axis(1, at = xvalues, font = 1)
-                if (!noyscale) axis(2, at = c(0, (-5:5) * 20), font = 1)
+                if (!noyscale) axis(2, at = c(0, (-10:10) * 10), font = 1)
                 if (nlas != 3 & nlas != 2) {
                       if (showss) {
                 mtext(ssize, side = 1, at = xvalues, line = 2, font = 1, cex = ncex, adj = 0.5, las = nlas)
@@ -762,7 +764,7 @@ setMethod("print",
         }
 
         sObs <- exp(logHR)
-              plot(xvalues, exp(logHR), axes = FALSE, ylim = yl, ylab = text2, xlab = "")
+        plot(xvalues, exp(logHR), axes = FALSE, ylim = yl, ylab = text2, xlab = "", type = "n")
         for (j in 1:ndcurves){
               points(xvalues[group == j], sObs[group == j], lty = lsty[sell][j+1], lwd = 2, pch = marker[sell][j+1], 
           type = "o", col = color[sell][j+1], bg = color[sell][j+1])

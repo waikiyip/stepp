@@ -68,7 +68,7 @@ plot(statKM, ncex=0.65, legendy=30, pline=-15.5, color=c("blue","gold"),
         pointwise=FALSE, 
         xlabel="Median Ki-67 LI in Subpopulation (\% immunoreactivity)",
         ylabel="4-year Disease Free Survival", 
-        tlegend=c("Tamoxifen", "Letrozole"), nlas=3)
+        tlegend=c("Letrozole", "Tamoxifen"), nlas=3)
 
 
 
