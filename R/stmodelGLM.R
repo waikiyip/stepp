@@ -999,7 +999,7 @@ print.cov.GLM <- function(stobj, trts) {
   	  cat("\n")
   	  write(paste("The covariance matrix of the effect differences estimates for the",
   		  ns, "subpopulations is:"), file = "")
-  	  write(paste("trt ", trts[j+1], "vs. trt ", trts[1]), file = "")
+  	  write(paste("trt ", trts[1], "vs. trt", trts[j + 1]), file = "")
       print(stobj@result$Res[[j]]$sigma)
 
   	  cat("\n")
@@ -1018,7 +1018,7 @@ print.stat.GLM <- function(stobj, trts) {
   	  t <- stobj@result$Res[[j]]
   	  cat("\n")
       write(paste("Supremum test results"), file = "")
-  	  write(paste("trt ", trts[j + 1], "vs. trt", trts[1]), file = "")
+  	  write(paste("trt ", trts[1], "vs. trt", trts[j + 1]), file = "")
 
   	  write(paste("Interaction p-value based on effect differences estimates:", t$pvalue), file = "")
       cat("\n")

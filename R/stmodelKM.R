@@ -658,7 +658,7 @@ print.cov.KM <- function(stobj, timePoint, trts) {
 	  write(paste("The covariance matrix of the Kaplan-Meier differences at", 
              	timePoint, "time units for the", ns, "subpopulations is:"), 
              	file = "")
-	  write(paste("trt ", trts[j+1], "vs. trt ", trts[1]), file = "")
+	  write(paste("trt ", trts[1], "vs. trt", trts[j + 1]), file = "")
 	  print(stobj@result$Res[[j]]$sigma)
       
 	  cat("\n")
@@ -688,7 +688,7 @@ print.stat.KM <- function(stobj, trts) {
     t <- stobj@result$Res[[j]]
     cat("\n")
         write(paste("Supremum test results"), file = "")
-    write(paste("trt", trts[j + 1], "vs. trt", trts[1]), file = "")
+    write(paste("trt", trts[1], "vs. trt", trts[j + 1]), file = "")
      	  write(paste("Interaction p-value based on Kaplan-Meier estimates:", t$pvalue), file = "")
     write(paste("Interaction p-value based on hazard ratio estimates:", t$HRpvalue), file = "")
 

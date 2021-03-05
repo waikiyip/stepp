@@ -551,7 +551,7 @@ print.cov.CI <- function(stobj, timePoint, trts) {
       cat("\n")
       write(paste("The covariance matrix of the cumulative incidence differences at", 
         timePoint, "time units for the", ns, "subpopulations is:"), file = "")
-      write(paste("trt ", trts[j+1], "vs. trt ", trts[1]), file = "")
+      write(paste("trt ", trts[1], "vs. trt", trts[j + 1]), file = "")
       print(stobj@result$Res[[j]]$sigma)
 
       cat("\n")
@@ -568,7 +568,7 @@ print.stat.CI <- function(stobj, trts) {
       t <- stobj@result$Res[[j]]
       cat("\n")
       write(paste("Supremum test results"), file = "")
-      write(paste("trt", trts[j+1], "vs. trt", trts[1]), file = "")
+      write(paste("trt", trts[1], "vs. trt", trts[j + 1]), file = "")
       write(paste("Interaction p-value based on cumulative incidence estimates:", t$pvalue), file = "")
       write(paste("Interaction p-value based on hazard ratio estimates:", t$HRpvalue), file = "")
 
