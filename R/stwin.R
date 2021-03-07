@@ -8,7 +8,8 @@ setClassUnion("null_or_numeric", c("numeric", "NULL"))
 # stepp window #
 ################
 setClass("stwin",
-  representation(type = "character",	# stepp window type
+  representation(
+    type    = "character",	        # stepp window type
   	r1      = "null_or_numeric",    # sliding window: largest number of patients in common
   					                        #                 among consecutive subpopulations
   					                        # tail-oriented window: < vector
@@ -16,10 +17,48 @@ setClass("stwin",
                                     #                 subpopulation
     e1      = "null_or_numeric",    # event-based window: largest number of events in common
                                     #                     among consecutive subpopulations
-    e2      = "null_or_numeric",    # event-based window: minimum number of events of each
+    e2      = "null_or_numeric"),    # event-based window: minimum number of events of each
                                     #                     subpopulation
-  	basedon = "character"),	        # what is the window based on - event or all
-  prototype(type = "sliding", r1 = 5, r2 = 20, e1 = NULL, e2 = NULL, basedon = "all")
+  prototype(type = "sliding", r1 = 5, r2 = 20, e1 = NULL, e2 = NULL)
+)
+
+setMethod("initialize", "stwin",
+  function(.Object, type, r1, r2, e1, e2, ...) {
+    if (missing(type)) {
+      type <- "sliding"
+    }
+    if (missing(r1) & missing(e1)) {
+      r1 <- 5
+    } else if (missing(r1) & !missing(e1)) {
+      r1 <- NULL
+    }
+    if (missing(r2) & missing(e2)) {
+      r2 <- 20
+    } else if (missing(r2) & !missing(e2)) {
+      r2 <- NULL
+    }
+    if (missing(e1)) {
+      e1 <- NULL
+    }
+    if (missing(e2)) {
+      e2 <- NULL
+    }
+    if (type == "tail-oriented"){
+      if (length(r1) != length(r2)) {
+        errmsg2 <- "minpatspop (r1) and patspop (r2) must have the same length for 'tail-oriented' windows."
+        stop(errmsg2)
+      }
+      r1 <- unique(sort(c(r1)))
+      r2 <- unique(sort(c(r2)))
+    }
+    .Object@type <- type
+    .Object@r1 <- r1
+    .Object@r2 <- r2
+    .Object@e1 <- e1
+    .Object@e2 <- e2
+    if (!validObject(.Object)) stop("")
+    callNextMethod(.Object, ...)
+  }
 )
 
 setValidity("stwin", 
@@ -31,7 +70,18 @@ setValidity("stwin",
   		errmsg1 <- paste(errmsg1, object@type)
   		print(errmsg1)
 	  } else {
-  	  if (object@type == "sliding") {
+  	  if (object@type == "tail-oriented") {
+        if (length(unique(object@r1)) > 1 & length(unique(object@r2)) > 1) {
+          status <- FALSE
+          errmsg2 <- "either minpatspop (r1) or patspop (r2) must contain a single unique value for 'tail-oriented' windows (type '?stepp.win' for more details)."
+          print(errmsg2)
+        }
+        if (any(object@r1 <= object@r2)) {
+          status <- FALSE
+          errmsg2 <- "minpatspop (r1) must be larger (element-wise) than patspop (r2) for 'tail-oriented' windows."
+          print(errmsg2)
+        }
+      } else if (object@type == "sliding") {
         if (is.na(object@r1) | is.na(object@r2)) {
           status <- FALSE
           errmsg2 <- "minpatspop (r1) and patspop (r2) must be both integers greater than or equal to 1."
@@ -78,7 +128,7 @@ setMethod("summary", signature = "stwin",
 )
 
 # constructor function for stepp window
-stepp.win <- function(type = "sliding", r1 = 5, r2 = 20, e1 = NULL, e2 = NULL, basedon = "all") {
+stepp.win <- function(type = "sliding", r1 = 5, r2 = 20, e1 = NULL, e2 = NULL) {
 	if (type == "tail-oriented"){
 	  r1 <- unique(sort(c(r1)))
 	  r2 <- unique(sort(c(r2)))
@@ -89,7 +139,7 @@ stepp.win <- function(type = "sliding", r1 = 5, r2 = 20, e1 = NULL, e2 = NULL, b
     r1 <- NULL
     r2 <- NULL
   }
-	sw <- new("stwin", type = type, r1 = r1, r2 = r2, e1 = e1, e2 = e2, basedon = basedon)
+	sw <- new("stwin", type = type, r1 = r1, r2 = r2, e1 = e1, e2 = e2)
   validObject(sw)
 	return(sw)
 }
@@ -106,56 +156,57 @@ stepp.win <- function(type = "sliding", r1 = 5, r2 = 20, e1 = NULL, e2 = NULL, b
 # 3. dir - "GE" or "LE"
 #
 gen.tailwin <- function(covariate, nsub, dir="LE") {
-  if (nsub < 1) stop("No of subgroups must be > 1")
-  perc    <- 1/(nsub+1)
+  if (nsub > length(unique(covariate))) stop("No of subpopulations can't be larger than covariate unique values")
+  if (nsub <= 1) stop("No of subpopulations must be larger than 1")
+  perc <- 1/(nsub + 1)
 
-  cov.t   <- sort(covariate)
-  remain  <- length(cov.t)
-  lcov    <- remain
+  cov.t <- sort(covariate)
+  remain <- length(cov.t)
+  lcov <- remain
   grpsize <- round(remain*perc,0)
-  v	    <- rep(0, remain)
-  np      <- rep(0, remain)
+  v <- rep(0, remain)
+  np <- rep(0, remain)
 
-  i	    <- 0
+  i <- 0
   if (dir == "LE"){
-    while (remain >= 2*grpsize){
-	cov.val <- cov.t [remain-grpsize] 
-	# handle the case where the covariate value is the max.
-	if (cov.val == max(cov.t)){
-	  pro.val <- which(cov.t < max(cov.t)) 
-	  cov.val <- cov.t[pro.val[length(pro.val)]]
-	}
-	mat	     <- which(cov.val == cov.t)
-	cov.r	     <- mat[length(mat)]
-	v[lcov-i]  <- cov.val
-	cov.t	     <- cov.t[1:cov.r]
-	remain     <- length(cov.t)
-	np[lcov-i] <- remain
-	i 	     <- i+1
+    while (remain >= 2*grpsize) {
+    	cov.val <- cov.t[remain - grpsize]
+    	# handle the case where the covariate value is the max.
+    	if (cov.val == max(cov.t)) {
+    	  pro.val <- which(cov.t < max(cov.t)) 
+    	  cov.val <- cov.t[pro.val[length(pro.val)]]
+    	}
+    	mat <- which(cov.val == cov.t)
+    	cov.r <- mat[length(mat)]
+    	v[lcov - i] <- cov.val
+    	cov.t <- cov.t[1:cov.r]
+    	remain <- length(cov.t)
+    	np[lcov - i] <- remain
+    	i <- i + 1
     } 
-    v   <- v[(lcov-i+1):lcov]
-    np <- np[(lcov-i+1):lcov]
+    v <- v[(lcov - i + 1):lcov]
+    np <- np[(lcov - i + 1):lcov]
   }
   else {
-    while (remain >= 2*grpsize){
-	cov.val <- cov.t[grpsize+1]
-	# handle the case where the covariate value is the min.
-	if (cov.val == min(cov.t)){
-	  pro.val <- which(cov.t > min(cov.t))
-	  cov.val <- cov.t[pro.val[1]]
-	}
+    while (remain >= 2*grpsize) {
+    	cov.val <- cov.t[grpsize + 1]
+    	# handle the case where the covariate value is the min.
+    	if (cov.val == min(cov.t)) {
+    	  pro.val <- which(cov.t > min(cov.t))
+    	  cov.val <- cov.t[pro.val[1]]
+    	}
 
-	temp    <- which(cov.val == cov.t)
-	cov.l	  <- temp[1]
-	v[i+1]  <- cov.val
-	cov.t	  <- cov.t[(cov.l):length(cov.t)]
-	remain  <- length(cov.t)
-	np[i+1] <- length(cov.t)
-	i	  <- i+1
+    	temp <- which(cov.val == cov.t)
+    	cov.l <- temp[1]
+    	v[i + 1] <- cov.val
+    	cov.t <- cov.t[(cov.l):length(cov.t)]
+    	remain <- length(cov.t)
+    	np[i + 1] <- length(cov.t)
+    	i <- i + 1
     }
-    v   <- v[1:i]
+    v <- v[1:i]
     np <- np[1:i]
   }
 
-  return(list(v=v, np=np))
+  return(list(v = v, np = np))
 }

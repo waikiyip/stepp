@@ -19,7 +19,7 @@ cov     <- bigKM$ki67
 #   timest = 4, noperm = noperm, minRequiredSubpops = 5, legendy = 30,
 #   pline = -2.5, color = c("red", "black"), ylabel = "4 year DFS",
 #   xlabel = "Subpopulations by Median Ki-67", ncex = 0.7,
-#   tlegend = c("Tamoxifen", "Letrozole"), nlas = 3, alpha = 0.05,
+#   tlegend = c(Letrozole", "Tamoxifen"), nlas = 3, alpha = 0.05,
 #   pointwise = FALSE)
 
 # generate event-based windows
@@ -42,7 +42,7 @@ print(resCI_e)
 plot(resCI_e, legendy = 50,
      pline = -2.5, color = c("red", "black"), ylabel = "4 year DFS",
      xlabel = "Subpopulations by Median Ki-67", ncex = 0.7,
-     tlegend = c("Tamoxifen", "Letrozole"), nlas = 3, alpha = 0.05,
+     tlegend = c("Letrozole", "Tamoxifen"), nlas = 3, alpha = 0.05,
      pointwise = FALSE)
 
 # estimate and test the KM model
@@ -57,7 +57,7 @@ resKM_e <- test(resKM_e, noperm)
 print(resKM_e)
 plot(resKM_e, ylabel = "4 year DFS",
      xlabel = "Subpopulations by Median Ki-67", ncex = 0.7,
-     tlegend = c("Tamoxifen", "Letrozole"), nlas = 3, alpha = 0.05)
+     tlegend = c("Letrozole", "Tamoxifen"), nlas = 3, alpha = 0.05)
 
 ### Example 2 ###
 
@@ -119,3 +119,225 @@ plot(resCI_e, legendy = 30,
      xlabel = "Subpopulations by Median Continuous Variable", ncex = 0.7,
      tlegend = c("Trt A", "Trt B"), nlas = 3, alpha = 0.05,
      pointwise = FALSE)
+
+### Example 3 ###
+
+data(bigKM)
+
+ranger2 <- c(100, 450)
+ranger1 <- c(50, 300)
+maxnsubpops <- 30
+
+res_bal <- balance_patients(ranger1, ranger2, maxnsubpops, bigKM$ki67,
+                            plot = TRUE, verbose = TRUE, contour = TRUE,
+                            nlevels = 6, border = TRUE)
+
+### Examples for 'tail-oriented' windows ###
+
+library(stepp)
+
+set.seed(101)
+Y <- rnorm(100)
+summary(Y)
+
+nsubpop <- 10
+tt <- gen.tailwin(Y, nsub = nsubpop, dir = "LE")
+ss <- stepp.win(type = "tail-oriented", r1 = tt$v, r2 = rep(min(Y), nsubpop))
+
+# create and generate the stepp subpopulation
+sp <- new("stsubpop")
+sp <- generate(sp, win = ss, cov = Y)
+summary(sp)
+
+# ---
+
+nsubpop <- 10
+tt <- gen.tailwin(Y, nsub = nsubpop, dir = "GE")
+ss <- stepp.win(type = "tail-oriented", r1 = rep(max(Y), nsubpop), r2 = tt$v)
+
+# create and generate the stepp subpopulation
+sp <- new("stsubpop")
+sp <- generate(sp, win = ss, cov = Y)
+summary(sp)
+
+# ---
+
+win1 <- stepp.win(type="sliding", r1=5,r2=99)
+
+# create and generate the stepp subpopulation
+sp <- new("stsubpop")
+sp <- generate(sp, win = win1, cov = Y)
+summary(sp)
+
+###
+
+# debugonce(generate, signature = "stsubpop")
+# debugonce(generate.all)
+# debug(gen.tailwin)
+
+###
+
+library(stepp)
+
+data(bigKM)
+
+# bigKM$ki67[1:80] <- NA
+# cov_na <- which(is.na(bigKM$ki67))
+# bigKM <- bigKM[-cov_na, ]
+
+rxgroup <- bigKM$trt
+time    <- bigKM$time
+evt     <- bigKM$event
+cov     <- bigKM$ki67
+
+# analyze using Cumulative Incidence method with
+# sliding window size of 150 patients and a maximum of 50 patients in common
+#
+nsubpop_tmp <- 10
+win_tmp <- gen.tailwin(cov, nsub = nsubpop_tmp, dir = "GE")
+nsubpop <- length(win_tmp$v)
+swin <- new("stwin", type = "tail-oriented", r1 = rep(max(cov), nsubpop), r2 = win_tmp$v) # create a tail-oriented window
+subp <- new("stsubpop")                             # create subpopulation object
+subp <- generate(subp, win = swin, covariate = cov) # generate the subpopulations
+summary(subp)					                    # summary of the subpopulations
+
+# create a stepp model using Kaplan Meier Method to analyze the data
+#
+smodel  <- new("stmodelKM", coltrt=rxgroup, trts=c(1,2), survTime=time, censor=evt, timePoint=4)
+
+statKM  <- new("steppes")		  # create a test object based on subpopulation and window
+statKM  <- estimate(statKM, subp, smodel) # estimate the subpopulation results
+# Warning: IT IS RECOMMEND TO USE AT LEAST 2500 PERMUTATIONS TO  PROVIDE STABLE RESULTS.
+statKM <- test(statKM, nperm = 10)       # permutation test with 10 iterations
+
+print(statKM)				  # print the estimates and test statistics
+plot(statKM, ncex=0.65, legendy=30, pline=-15.5, color=c("blue","gold"),
+     pointwise=FALSE, 
+     xlabel="Median Ki-67 LI in Subpopulation (% immunoreactivity)",
+     ylabel="4-year Disease Free Survival", 
+     tlegend=c("Letrozole", "Tamoxifen"), nlas=3)
+
+### Example for single group analysis ###
+library(stepp)
+
+data(bigKM)
+
+# bigKM$ki67[1:80] <- NA
+# cov_na <- which(is.na(bigKM$ki67))
+# bigKM <- bigKM[-cov_na, ]
+
+rxgroup <- bigKM$trt
+time    <- bigKM$time
+evt     <- bigKM$event
+cov     <- bigKM$ki67
+
+# analyze using Cumulative Incidence method with
+# sliding window size of 150 patients and a maximum of 50 patients in common
+#
+nsubpop_tmp <- 10
+win_tmp <- gen.tailwin(cov, nsub = nsubpop_tmp, dir = "GE")
+nsubpop <- length(win_tmp$v)
+swin <- new("stwin", type = "tail-oriented", r1 = rep(max(cov), nsubpop), r2 = win_tmp$v) # create a tail-oriented window
+subp <- new("stsubpop")                             # create subpopulation object
+subp <- generate(subp, win = swin, covariate = cov) # generate the subpopulations
+summary(subp)					                    # summary of the subpopulations
+
+# create a stepp model using Kaplan Meier Method to analyze the data
+#
+smodel  <- new("stmodelKM", survTime=time, censor=evt, timePoint=4)
+
+statKM  <- new("steppes")		  # create a test object based on subpopulation and window
+statKM  <- estimate(statKM, subp, smodel) # estimate the subpopulation results
+statKM <- test(statKM, nperm = 10)       # permutation test with 10 iterations
+
+print(statKM)				  # print the estimates and test statistics
+plot(statKM, ncex=0.65, pline=-15.5,
+     xlabel="Median Ki-67 LI in Subpopulation (% immunoreactivity)",
+     ylabel="Survival Estimates", 
+     nlas=3, subplot = TRUE)
+
+###
+
+data(bigCI)
+
+rxgroup <- bigCI$trt
+time    <- bigCI$time
+evt     <- bigCI$event
+cov     <- bigCI$ki67
+
+# analyze using Cumulative Incidence method with
+# sliding window size of 150 patients and a maximum of 50 patients in common
+#
+swin    <- new("stwin", type="sliding", r1=50, r2=150) # create a sliding window
+subp    <- new("stsubpop")                             # create subpopulation object
+subp    <- generate(subp, win=swin, covariate=cov) # generate the subpopulations
+summary(subp)					   # summary of the subpopulations
+
+# create a stepp model using Cumulative Incidences to analyze the data
+#
+smodel  <- new("stmodelCI", coltime=time, coltype=evt, timePoint=4)
+
+statCI  <- new("steppes")		  # create a test object based on subpopulation and window
+statCI  <- estimate(statCI, subp, smodel) # estimate the subpo10ulation results
+# Warning: In this example, the permutations have been set to 0 to allow the function
+# to finish in a short amount of time.  IT IS RECOMMEND TO USE AT LEAST 2500 PERMUTATIONS TO 
+# PROVIDE STABLE RESULTS.
+statCI  <- test(statCI, nperm=10)       # permutation test with 0 iterations
+
+print(statCI)				  # print the estimates and test statistics
+plot(statCI, ncex=0.65, pline=-15.5,
+     xlabel="Median Ki-67 LI in Subpopulation (% immunoreactivity)",
+     ylabel="4-year Cumulative Incidence", 
+     nlas=3, subplot = TRUE)
+
+###
+
+data(aspirin)
+
+# remove cases with missing data
+aspirinc <- aspirin[complete.cases(aspirin), ]
+
+# make a subset of patients with placebo and 81 mg
+attach(aspirinc)
+subset1  <- DOSE == 0 | DOSE == 81
+aspirin1 <- aspirinc[subset1,]
+detach(aspirinc)
+
+# set up treatment assignment
+trtA     <- rep(0, dim(aspirin1)[1])
+trtA[aspirin1[,"DOSE"] == 81] <- 1
+
+# STEPP analysis A: placebo vs 81 mg aspirin
+inc_win     <- stepp.win(type="sliding", r1=30, r2=100)
+inc_sp      <- stepp.subpop(swin=inc_win, cov=aspirin1$AGE)
+
+ADorLE      <- as.numeric(aspirin1$AD==1 | aspirin1$AL==1)
+modelA      <- stepp.GLM(colY = ADorLE, glm = "binomial", link = "logit")
+# Warning: In this example, the permutations have been set to 50 to allow the function
+# to finish in a short amount of time.  IT IS RECOMMEND TO USE AT LEAST 2500 PERMUTATIONS TO 
+# PROVIDE STABLE RESULTS.
+statGLM  <- new("steppes")		  # create a test object based on subpopulation and window
+statGLM  <- estimate(statGLM, inc_sp, modelA) # estimate the subpopulation results
+# Warning: In this example, the permutations have been set to 0 to allow the function
+# to finish in a short amount of time.  IT IS RECOMMEND TO USE AT LEAST 2500 PERMUTATIONS TO 
+# PROVIDE STABLE RESULTS.
+statGLM  <- test(statGLM, nperm=10)       # permutation test with 0 iterations
+
+print(statGLM)				  # print the estimates and test statistics
+plot(statGLM, ncex=0.70, legendy=30, pline=-4.5,
+     xlabel="Subpopulations by Median Age", ylabel="Risk",
+     nlas=3, noyscale=TRUE, subplot=TRUE)
+
+### Example for balanced subpopulations ###
+library(stepp)
+
+data(bigKM)
+
+rxgroup <- bigKM$trt
+time    <- bigKM$time
+evt     <- bigKM$event
+cov     <- bigKM$ki67
+
+res <- balance_patients(range_r1 = c(30, 100), range_r2 = c(50, 300),
+                        maxnsubpops = 100, covar = cov, verbose = TRUE,
+                        plot = TRUE, contour = FALSE)

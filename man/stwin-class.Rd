@@ -24,8 +24,8 @@
   \cr
   3. for tail-oriented window, r1 is a vector of maximum covariate value for each subpopulation
      from the minimum value of the entire subpopulation, and r2 is a vector of minimum covariate
-     values for each subpopulation from the maximum value of the window. The utility function, 
-     gen.tailwin, can be used to generate these two vectors based on the number of desired 
+     values for each subpopulation from the maximum value of the window. The utility function 
+     \code{\link{gen.tailwin}()} can be used to generate these vectors based on the number of desired 
      subpopulations.\cr
   \cr
   When "sliding_events" is chosen r1 and r2 are set to \code{NULL}, while when "sliding" or
@@ -52,8 +52,6 @@
     event-based sliding window: minimum number of events allowed in overlapping windows}
     \item{\code{e2}:}{Object of class \code{"numeric"} or \code{NULL} \cr
     event-based sliding window: number of events in each subpopulation}
-    \item{\code{basedon}:}{Object of class \code{"character"} \cr 
-		what the window is based on: all patients - "all" (default) }
   }
 }
 \section{Methods}{

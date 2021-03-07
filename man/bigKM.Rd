@@ -57,7 +57,7 @@ summary(subp)					   # summary of the subpopulations
 smodel  <- new("stmodelKM", coltrt=rxgroup, trts=c(1,2), survTime=time, censor=evt, timePoint=4)
 
 statKM  <- new("steppes")		  # create a test object based on subpopulation and window
-statKM  <- estimate(statKM, subp, smodel) # estimate the subpo10ulation results
+statKM  <- estimate(statKM, subp, smodel) # estimate the subpopulation results
 # Warning: In this example, the permutations have been set to 0 to allow the function
 # to finish in a short amount of time.  IT IS RECOMMEND TO USE AT LEAST 2500 PERMUTATIONS TO 
 # PROVIDE STABLE RESULTS.
@@ -68,7 +68,7 @@ plot(statKM, ncex=0.65, legendy=30, pline=-15.5, color=c("blue","gold"),
         pointwise=FALSE, 
         xlabel="Median Ki-67 LI in Subpopulation (\% immunoreactivity)",
         ylabel="4-year Disease Free Survival", 
-        tlegend=c("Taxmoxifen", "Letrozole"), nlas=3)
+        tlegend=c("Letrozole", "Tamoxifen"), nlas=3)
 
 
 

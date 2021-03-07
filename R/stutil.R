@@ -5,18 +5,14 @@
 #################
 # stepp utility #
 #################
-library(methods)
-library(car)
-#library(cmprsk)
-
 setGeneric("estimate", function(.Object, ...)
   standardGeneric("estimate"))
 
 setGeneric("test", function(.Object, ...)
   standardGeneric("test"))  
 
-#setGeneric("subset1", function(.Object, ...)
-# standardGeneric("subset1"))
+# setGeneric("subset1", function(.Object, ...)
+#  standardGeneric("subset1"))
 
 #
 # internal routine to generate covariance matrix, pvalue
@@ -60,7 +56,7 @@ ppv <- function(imatrix, sigmainv, estarray, est, noPerms) {
 
 # compute the supremum statistics and generate the pvalue
 #
-ppv2 <- function(imatrix, estarray, est, noPerms, debug=FALSE) {
+ppv2 <- function(imatrix, estarray, est, noPerms) {
   sigma <- sqrt(diag(var(imatrix)))
   stdDifferences <- t(apply(imatrix, 1, function(x) x/sigma))
   tPerm <- apply(abs(stdDifferences), 1, max)

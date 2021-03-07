@@ -16,26 +16,34 @@ generate.all <- function(sp, win, covariate, coltype = NULL, coltrt = NULL, trts
   if (win@type == "tail-oriented") {
     zvals   <- unique(sort(covariate))
     if (min(r1) < min(zvals) | max(r2) > max(zvals)) stop("Cannot create tail-oriented window")
-    nsubpop <- length(r1)+length(r2)+1
+    # nsubpop <- length(r1) + length(r2) + 1 ### [SV 27.02.2021: shouldn't it be length(r1)+length(r2)?]
+    nsubpop <- length(r1) +length(r2)
     npatsub <- rep(0, nsubpop)
     I0      <- rep(1, nsubpop)
     I1      <- rep(length(zvals), nsubpop)
-    if (length(r1) != 0) {
+    # if (length(r1) != 0) { ### [SV 27.02.2021: shouldn't it be > 1?]
+    if (length(r1) > 1) {
       for (i in 1:length(r1)) {
         npatsub[i] <- sum(covariate <= r1[i])
-        sel    <- which(zvals <= r1[i])
-        I1[i]      <- sel[length(sel)]
+        sel <- which(zvals <= r1[i])
+        I1[i] <- sel[length(sel)]
       }
+      npatsub[length(r1) + 1] <- length(covariate)
     }
-    npatsub[length(r1)+1] <- length(covariate)
-    if (length(r2) != 0) {
+    # if (length(r2) != 0) { ### [SV 27.02.2021: shouldn't it be > 1?]
+    if (length(r2) > 1) {
+      npatsub[1] <- length(covariate)
       for (i in 1:length(r2)) {
-        k <- i+length(r1)+1
+        k <- i + length(r1)
         npatsub[k] <- sum(covariate >= r2[i])
-        I0[k]  <- which(zvals >= r2[i])[1]
+        I0[k] <- which(zvals >= r2[i])[1]
       }
     }
   } else if (win@type == "sliding") {
+    if (r2 >= length(covariate)) {
+      errmsg <- "patspop (r2) must be strictly smaller than the number of unique covariate values."
+      stop(errmsg)
+    }
     zvals <- unique(sort(covariate))
     absfreq <- as.numeric(table(covariate))
     cumfreq <- cumsum(absfreq)
@@ -138,7 +146,7 @@ generate.all <- function(sp, win, covariate, coltype = NULL, coltrt = NULL, trts
     # insufficient events to satisfy E2.
     #
     if (I1[1] >= length(covariate)) {
-      obsInitialSubpopCreationFailures <- obsInitialSubpopCreationFailures + 1
+      # obsInitialSubpopCreationFailures <- obsInitialSubpopCreationFailures + 1
       print(paste("Warning: Insufficient Type 1 Events found creating initial subpopulation (",
                   "Trt0=", cumtypevalsTrt0[length(cumtypevalsTrt0)],
                    " Trt1=", cumtypevalsTrt1[length(cumtypevalsTrt1)], ")", sep=""))
@@ -193,7 +201,7 @@ generate.all <- function(sp, win, covariate, coltype = NULL, coltrt = NULL, trts
     # Make sure there are enough subpopulations
     #
     if (nsubpop < minsubpops) {
-      obsInsufficientSubpopsErrors <- obsInsufficientSubpopsErrors + 1
+      # obsInsufficientSubpopsErrors <- obsInsufficientSubpopsErrors + 1
       print(paste("Warning: too few subpopulations (", nsubpop, ")", sep = ""))
       stop("Throwing out dataset.")
     }
@@ -271,7 +279,7 @@ setClass("stsubpop",
 
 setMethod("initialize", "stsubpop",
   function(.Object) {
-    .Object@init    <- FALSE
+    .Object@init <- FALSE
     return(.Object)
   }
 )
@@ -291,7 +299,10 @@ setGeneric("generate", function(.Object, win, covariate, coltype, coltrt, trts, 
 
 setMethod("generate", 
   signature="stsubpop",
-  definition=function(.Object, win, covariate, coltype, coltrt, trts, minsubpops) {
+  definition = function(.Object, win, covariate, coltype, coltrt, trts, minsubpops) {
+    if (missing(minsubpops)) {
+      minsubpops <- 2
+    }
     .Object <- generate.all(.Object, win, covariate, coltype, coltrt, trts, minsubpops)
     return(.Object)
   }
@@ -466,10 +477,14 @@ setMethod("summary",
         write("                                  Covariate Summary                 Sample", file = "")
         write("     Subpopulation        Median       Minimum       Maximum          size", file = "")
         for (i in 1:object@nsubpop) {
-          if (object@win@type == "tail-oriented" & i == length(object@win@r1) + 1) {
+          if (object@win@type == "tail-oriented" & i == length(object@win@r1) + 1 & length(object@win@r1) > 1) {
             write(paste(format(temp[i, 1], width = 12), format(temp[i, 2], width = 19, nsmall = 2),
               format(temp[i, 3], width = 13, nsmall = 4), format(temp[i, 4], width = 13, nsmall = 4),
-              format(temp[i, 5], width = 13), "Entire cohort"), file = "")
+              format(temp[i, 5], width = 13), "(entire cohort)"), file = "")
+          } else if (object@win@type == "tail-oriented" & i == 1 & length(object@win@r2) > 1) {
+            write(paste(format(temp[i, 1], width = 12), format(temp[i, 2], width = 19, nsmall = 2),
+              format(temp[i, 3], width = 13, nsmall = 4), format(temp[i, 4], width = 13, nsmall = 4),
+              format(temp[i, 5], width = 13), "(entire cohort)"), file = "")
           } else {
             write(paste(format(temp[i, 1], width = 12), format(temp[i, 2], width = 19, nsmall = 2),
               format(temp[i, 3], width = 13, nsmall = 4), format(temp[i, 4], width = 13, nsmall = 4),
