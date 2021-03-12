@@ -235,7 +235,6 @@ balance_patients <- function(range_r1, range_r2, maxnsubpops, covar, verbose = F
         }
       }
       # if (border) {
-      #   browser()
       #   r2_arr <- r2_arr[-setdiff(1:max(range_r1), min(range_r1):max(range_r1)),
       #     -setdiff(1:max(range_r2), min(range_r2):max(range_r2)),
       #     -setdiff(1:maxnsubpops, nsubpops), drop = FALSE]

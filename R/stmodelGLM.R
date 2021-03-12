@@ -30,13 +30,19 @@ setMethod("initialize", "stmodelGLM",
        colY <- numeric()
     }
     if (missing(MM)) {
-       MM <- matrix()
+       MM <- NULL
     }
     if (missing(glm)) {
       glm <- "gaussian"
     }
     if (missing(link)) {
-      link <- "identity"
+      if (glm == "gaussian") {
+        link <- "identity"
+      } else if (glm == "binomial") {
+        link <- "logit"
+      } else if (glm == "poisson") {
+        link <- "log"
+      }
     }
     if (missing(coltrt)) {
       coltrt <- rep(1, length(colY))
@@ -694,109 +700,104 @@ print.estimate.GLM <- function(x, family, trts){
   }
 
   for (j in 1:x@effect$ntrts) {
-	  cat("\n")
+	  # cat("\n")
 	  #
 	  #	print out the glm ressults
 	  #
 	  est	  <- x@effect$TrtEff[[j]]
 
-	  if (family == "gaussian"){
-          cat("\n")
-          if (x@effect$ntrts == 1) {
-            write("Effect estimates", file = "")
-          } else {
-            write(paste("Effect estimates for treatment group", model@trts[j]), file = "")
-          }
-          temp <- matrix(c(1:sp@nsubpop, round(est$sObs, digits = 4), round(est$sSE, digits = 4)), ncol = 3)
-          write("     Subpopulation     Effect		 Std. Err.", file = "")
-          for (i in 1:sp@nsubpop) {
-		if (sp@win@type == "tail-oriented" & i == overall_lbl){
-              write(paste(format(temp[i, 1], width = 12),
-				  format(temp[i, 2], width = 19, nsmall = 4),
-				  format(temp[i, 3], width = 15, nsmall = 4), "(entire cohort)"),
-			 	  file = "")
-		} else {
-              write(paste(format(temp[i, 1], width = 12),
-				  format(temp[i, 2], width = 19, nsmall = 4),
-				  format(temp[i, 3], width = 15, nsmall = 4)),
-			 	  file = "")
-		}
-          }
-	    if (sp@win@type != "tail-oriented"){
-            write(paste("        Overall",
+	  if (family == "gaussian") {
+      cat("\n")
+      if (x@effect$ntrts == 1) {
+        write("Effect estimates", file = "")
+      } else {
+        write(paste("Effect estimates for treatment group", model@trts[j]), file = "")
+      }
+      temp <- matrix(c(1:sp@nsubpop, round(est$sObs, digits = 4), round(est$sSE, digits = 4)), ncol = 3)
+      write("     Subpopulation     Effect		 Std. Err.", file = "")
+      for (i in 1:sp@nsubpop) {
+    		if (sp@win@type == "tail-oriented" & i == overall_lbl) {
+                  write(paste(format(temp[i, 1], width = 12),
+    				  format(temp[i, 2], width = 19, nsmall = 4),
+    				  format(temp[i, 3], width = 15, nsmall = 4), "(entire cohort)"),
+    			 	  file = "")
+    		} else {
+                  write(paste(format(temp[i, 1], width = 12),
+    				  format(temp[i, 2], width = 19, nsmall = 4),
+    				  format(temp[i, 3], width = 15, nsmall = 4)),
+    			 	  file = "")
+    		}
+      }
+	    if (sp@win@type != "tail-oriented") {
+        write(paste("        Overall",
 		  		format(round(est$oObs, digits = 4), nsmall = 4, width = 16),
 		  		format(round(est$oSE,  digits = 4), nsmall = 4, width = 15)),
-				file = "")
+  				file = "")
 	    }
-          cat("\n")
-	    
-        } else
-	  if (family == "binomial"){
-          cat("\n")
-          if (x@effect$ntrts == 1) {
-            write("Risk estimates", file = "")
-          } else {
-            write(paste("Risk estimates for treatment group", model@trts[j]), file = "")
-          }
-          temp <- matrix(c(1:sp@nsubpop, round(est$sObs, digits = 4), round(est$sSE, digits = 4)), ncol = 3)
-          write("     Subpopulation     Risk		 Std. Err.", file = "")
-          for (i in 1:sp@nsubpop) {
-		if (sp@win@type == "tail-oriented" & i == overall_lbl){
-              write(paste(format(temp[i, 1], width = 12),
-				  format(temp[i, 2], width = 19, nsmall = 4),
-				  format(temp[i, 3], width = 15, nsmall = 4), "(entire cohort)"),
-				  file = "")
-		} else {
-              write(paste(format(temp[i, 1], width = 12),
-				  format(temp[i, 2], width = 19, nsmall = 4),
-				  format(temp[i, 3], width = 15, nsmall = 4)),
-				  file = "")
-		}
-          }
-	    if (sp@win@type != "tail-oriented"){
-            write(paste("        Overall", 
-				format(round(est$oObs, digits = 4), nsmall = 4, width = 16),
-				format(round(est$oSE,  digits = 4), nsmall = 4, width = 15)),
-				file = "")
+      cat("\n")
+    } else if (family == "binomial") {
+      cat("\n")
+      if (x@effect$ntrts == 1) {
+        write("Risk estimates", file = "")
+      } else {
+        write(paste("Risk estimates for treatment group", model@trts[j]), file = "")
+      }
+      temp <- matrix(c(1:sp@nsubpop, round(est$sObs, digits = 4), round(est$sSE, digits = 4)), ncol = 3)
+      write("     Subpopulation     Risk		 Std. Err.", file = "")
+      for (i in 1:sp@nsubpop) {
+    		if (sp@win@type == "tail-oriented" & i == overall_lbl) {
+                  write(paste(format(temp[i, 1], width = 12),
+    				  format(temp[i, 2], width = 19, nsmall = 4),
+    				  format(temp[i, 3], width = 15, nsmall = 4), "(entire cohort)"),
+    				  file = "")
+    		} else {
+                  write(paste(format(temp[i, 1], width = 12),
+    				  format(temp[i, 2], width = 19, nsmall = 4),
+    				  format(temp[i, 3], width = 15, nsmall = 4)),
+    				  file = "")
+    		}
+      }
+	    if (sp@win@type != "tail-oriented") {
+        write(paste("        Overall", 
+  				format(round(est$oObs, digits = 4), nsmall = 4, width = 16),
+  				format(round(est$oSE,  digits = 4), nsmall = 4, width = 15)),
+  				file = "")
 	    }
-          cat("\n")
-
-        } else
-	  if (family == "poisson"){
-          cat("\n")
-          if (x@effect$ntrts == 1) {
-            write("    Effect estimates", file = "")
-          } else {
-            write(paste("    Effect estimates for treatment group", model@trts[j]), file = "")
-          }
-          temp <- matrix(c(1:sp@nsubpop, round(est$sObs, digits = 4), round(est$sSE, digits = 4)), ncol = 3)
-          write("     Subpopulation        Effect	Std. Err.", file = "")
-          for (i in 1:sp@nsubpop) {
-		if (sp@win@type == "tail-oriented" & i == overall_lbl){
-              write(paste(format(temp[i, 1], width = 12),
-				  format(temp[i, 2], width = 19, nsmall = 4),
-				  format(temp[i, 3], width = 15, nsmall = 4), "(entire cohort)"),
-				  file = "")
-		} else {
-              write(paste(format(temp[i, 1], width = 12), 
-				  format(temp[i, 2], width = 19, nsmall = 4), 
-				  format(temp[i, 3], width = 15, nsmall = 4)), 
-				  file = "")
-		}
-          }
-	    if (sp@win@type != "tail-oriented"){
-            write(paste("        Overall", 
-				format(round(est$oObs, digits = 4), nsmall = 4, width = 16),
-			 	format(round(est$oSE,  digits = 4), nsmall = 4, width = 15)), 
-			file = "")
-	    }
-          cat("\n")
-
+      cat("\n")
+    } else if (family == "poisson") {
+      cat("\n")
+      if (x@effect$ntrts == 1) {
+        write("    Effect estimates", file = "")
+      } else {
+        write(paste("    Effect estimates for treatment group", model@trts[j]), file = "")
+      }
+      temp <- matrix(c(1:sp@nsubpop, round(est$sObs, digits = 4), round(est$sSE, digits = 4)), ncol = 3)
+      write("     Subpopulation        Effect	Std. Err.", file = "")
+      for (i in 1:sp@nsubpop) {
+        if (sp@win@type == "tail-oriented" & i == overall_lbl) {
+          write(paste(format(temp[i, 1], width = 12),
+            format(temp[i, 2], width = 19, nsmall = 4),
+            format(temp[i, 3], width = 15, nsmall = 4), "(entire cohort)"),
+            file = "")
+        } else {
+          write(paste(format(temp[i, 1], width = 12), 
+            format(temp[i, 2], width = 19, nsmall = 4), 
+            format(temp[i, 3], width = 15, nsmall = 4)), 
+            file = "")
+        }
+      }
+      if (sp@win@type != "tail-oriented") {
+        write(paste("        Overall", 
+          format(round(est$oObs, digits = 4), nsmall = 4, width = 16),
+          format(round(est$oSE,  digits = 4), nsmall = 4, width = 15)), 
+          file = "")
+      }
+      cat("\n")
 	  }
 	}
 
   if (x@effect$ntrts > 1) {
-    cat("\n")
+    # cat("\n")
     write("Effect differences and ratio estimates", file = "")
   	est1 <- x@effect$TrtEff[[1]]
 
@@ -996,7 +997,7 @@ print.cov.GLM <- function(stobj, trts) {
   	for (j in 1:(stobj@result$ntrts - 1)) {
   	  ns <- stobj@subpop@nsubpop
   	  if (stobj@subpop@win@type == "tail-oriented") ns <- ns - 1
-  	  cat("\n")
+  	  # cat("\n")
   	  write(paste("The covariance matrix of the effect differences estimates for the",
   		  ns, "subpopulations is:"), file = "")
   	  write(paste("trt ", trts[1], "vs. trt", trts[j + 1]), file = "")
@@ -1016,7 +1017,7 @@ print.stat.GLM <- function(stobj, trts) {
   	for (j in 1:(stobj@result$ntrts-1)) {
 
   	  t <- stobj@result$Res[[j]]
-  	  cat("\n")
+  	  # cat("\n")
       write(paste("Supremum test results"), file = "")
   	  write(paste("trt ", trts[1], "vs. trt", trts[j + 1]), file = "")
 
@@ -1034,7 +1035,7 @@ setMethod("print",
   definition = function(x, stobj, estimate = TRUE, cov = TRUE, test = TRUE, ...){
     ntrts <- length(x@trts)
 
-		#
+    #
 		#  1. estimates
 		#
     if (estimate) {

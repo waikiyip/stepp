@@ -63,9 +63,7 @@ ranger2 <- c(950, 1050)
 ranger1 <- c(300, 500)
 maxnsubpops <- 50
 
-
-
-\dontrun{res_bal <- balance_patients(ranger1, ranger2, maxnsubpops, balance_example$covar,
-  plot = TRUE, verbose = TRUE, contour = TRUE, nlevels = 6, border = TRUE)}
-
+res_bal <- balance_patients(ranger1, ranger2, maxnsubpops, balance_example$covar,
+  plot = TRUE, verbose = TRUE, contour = TRUE, nlevels = 6)
+}
 }

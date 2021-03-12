@@ -541,7 +541,7 @@ setMethod("test",
 #
 print.estimate.KM <- function(x, timePoint, trts) {
 	for (j in 1:x@effect$ntrts) {
-    cat("\n")
+    # cat("\n")
     if (x@effect$ntrts == 1) {
       write(paste("Survival estimates ",
         "at time point", timePoint), file = "")
@@ -582,7 +582,7 @@ print.estimate.KM <- function(x, timePoint, trts) {
 	}
 
   if (x@effect$ntrts > 1) {
-    cat("\n")
+    # cat("\n")
     write("Survival differences at time point and hazard ratio estimates", file = "")
 
   	for (j in 2:x@effect$ntrts) {
@@ -653,8 +653,8 @@ print.cov.KM <- function(stobj, timePoint, trts) {
   if (!is.null(stobj@result)) {
     for (j in 1:(stobj@result$ntrts - 1)){
 	  ns <- stobj@subpop@nsubpop
-	  if (stobj@subpop@win@type == "tail-oriented") ns <- ns-1
-        cat("\n")
+	  if (stobj@subpop@win@type == "tail-oriented") ns <- ns - 1
+    # cat("\n")
 	  write(paste("The covariance matrix of the Kaplan-Meier differences at", 
              	timePoint, "time units for the", ns, "subpopulations is:"), 
              	file = "")
@@ -676,7 +676,7 @@ print.cov.KM <- function(stobj, timePoint, trts) {
 	  #write(paste("The covariance matrix (based on homogeneous association) of the log hazard ratios for the", 
         #    	stobj@subpop@nsubpop, "subpopulations is:"), file = "")
         #print(stobj@result$haHRsigma)
-        #cat("\n")
+    cat("\n")
     }
   }
 }
@@ -686,7 +686,7 @@ print.stat.KM <- function(stobj, trts) {
     for (j in 1:(stobj@result$ntrts-1)){
 
     t <- stobj@result$Res[[j]]
-    cat("\n")
+    # cat("\n")
         write(paste("Supremum test results"), file = "")
     write(paste("trt", trts[1], "vs. trt", trts[j + 1]), file = "")
      	  write(paste("Interaction p-value based on Kaplan-Meier estimates:", t$pvalue), file = "")
