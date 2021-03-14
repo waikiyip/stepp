@@ -447,7 +447,7 @@ setMethod("test",
 #
 print.estimate.CI <- function(x, timePoint, trts) {
   for (j in 1:x@effect$ntrts) {
-    cat("\n")
+    # cat("\n")
     if (x@effect$ntrts == 1) {
       write(paste("Cumulative incidence estimates ",
         "at time point", timePoint), file="")
@@ -488,7 +488,7 @@ print.estimate.CI <- function(x, timePoint, trts) {
   }
 
   if (x@effect$ntrts > 1) {
-    cat("\n")
+    # cat("\n")
     write(paste("Cumulative incidence differences at time point",timePoint), file="")
 
     for (j in 2:x@effect$ntrts) {
@@ -548,7 +548,7 @@ print.cov.CI <- function(stobj, timePoint, trts) {
     for (j in 1:(stobj@result$ntrts - 1)) {
       ns <- stobj@subpop@nsubpop
       if (stobj@subpop@win@type == "tail-oriented") ns <- ns-1
-      cat("\n")
+      # cat("\n")
       write(paste("The covariance matrix of the cumulative incidence differences at", 
         timePoint, "time units for the", ns, "subpopulations is:"), file = "")
       write(paste("trt ", trts[1], "vs. trt", trts[j + 1]), file = "")
@@ -566,7 +566,7 @@ print.stat.CI <- function(stobj, trts) {
   if (!is.null(stobj@result)) {
     for (j in 1:(stobj@result$ntrts - 1)) {
       t <- stobj@result$Res[[j]]
-      cat("\n")
+      # cat("\n")
       write(paste("Supremum test results"), file = "")
       write(paste("trt", trts[1], "vs. trt", trts[j + 1]), file = "")
       write(paste("Interaction p-value based on cumulative incidence estimates:", t$pvalue), file = "")

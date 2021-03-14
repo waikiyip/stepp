@@ -25,10 +25,10 @@ setMethod("initialize", "steppes",
       model <- new("stmodelKM")
     }
     if (missing(effect)) {
-      effect <- list()
+      effect <- NULL
     }
     if (missing(result)) {
-      result <- list()
+      result <- NULL
     }
     if (missing(nperm)) {
       nperm <- 0
@@ -398,420 +398,438 @@ setMethod("print",
 #
 # Internal worker routine for plot
 .Stepp.plot <- function(x, y, legendy, pline, at, color, ylabel, xlabel, ncex, tlegend,
-  nlas, alpha, pointwise, diff, ci, pv, showss, ylimit, dev,
-  together, noyscale, rug, lsty, marker, subset, subplot, ...) {
+  nlas, alpha, pointwise, diff, ci, pv, showss, ylimit, dev, together, noyscale, rug,
+  lsty, marker, subset, subplot, ...) {
 
-      Result        <- x@result$Res
-      nperm         <- x@nperm
-      TrtEff        <- x@effect$TrtEff
-      Ratios        <- x@effect$Ratios
-      nsubpop       <- x@subpop@nsubpop
-      npatsub       <- x@subpop@npatsub
-      medians       <- x@subpop@medianz
-      minz          <- x@subpop@minz
-      minc          <- x@subpop@minc
-      maxz          <- x@subpop@maxz
-      maxc          <- x@subpop@maxc
-      colvar        <- x@subpop@colvar
-      r1            <- x@subpop@win@r1
-      r2            <- x@subpop@win@r2
-      coltrt        <- x@model@coltrt
-      trts          <- x@model@trts
-      issinglegroup <- (x@effect$ntrts == 1)
+  Result        <- x@result$Res
+  nperm         <- x@nperm
+  TrtEff        <- x@effect$TrtEff
+  Ratios        <- x@effect$Ratios
+  nsubpop       <- x@subpop@nsubpop
+  npatsub       <- x@subpop@npatsub
+  medians       <- x@subpop@medianz
+  minz          <- x@subpop@minz
+  minc          <- x@subpop@minc
+  maxz          <- x@subpop@maxz
+  maxc          <- x@subpop@maxc
+  colvar        <- x@subpop@colvar
+  r1            <- x@subpop@win@r1
+  r2            <- x@subpop@win@r2
+  coltrt        <- x@model@coltrt
+  trts          <- x@model@trts
+  issinglegroup <- (x@effect$ntrts == 1)
 
-      #  set up the defaults
-      ntrts     <- length(trts)
-      txassign  <- rep(NA, length(coltrt))
-      for (j in 1:ntrts) txassign[which(coltrt == trts[j])] <- j
+  # set up the defaults
+  ntrts <- length(trts)
+  txassign <- rep(NA, length(coltrt))
+  for (j in 1:ntrts) txassign[which(coltrt == trts[j])] <- j
 
-          if (is.null(subset)) subset <- rep(1, ntrts)
-          if (length(nperm) == 0) {
-            pv <- FALSE # no pvalue displayed if permutation test not done
-          } else if (nperm == 0) {
-            pv <- FALSE # no pvalue displayed if permutation test not done
-          }
+  if (is.null(subset)) subset <- rep(1, ntrts)
+  if (length(nperm) == 0) {
+    pv <- FALSE # no pvalue displayed if permutation test not done
+  } else if (nperm == 0) {
+    pv <- FALSE # no pvalue displayed if permutation test not done
+  }
 
-      # Apply graphics defaults for lsty, marker
-      # Check to make sure it is consistent
-      if (is.null(lsty)) lsty = c(1,2,3,4,5,6,1,2)[1:ntrts]
-      if (is.null(marker)) marker = seq(1:25)[1:ntrts]
-      if (is.null(color)) color = c("black", "red", "blue", "orange", "green", "brown", "yellow", "magenta")[1:ntrts]
+  # Apply graphics defaults for lsty, marker
+  # Check to make sure it is consistent
+  if (is.null(lsty)) lsty = c(1,2,3,4,5,6,1,2)[1:ntrts]
+  if (is.null(marker)) marker = seq(1:25)[1:ntrts]
+  if (is.null(color)) color = c("black", "red", "blue", "orange", "green", "brown", "yellow", "magenta")[1:ntrts]
 
-      if (length(color) > 8 | length(lsty) >  8 | length(marker) > 8 |
-          length(color) != ntrts | length(lsty) != ntrts | length(marker) != ntrts){
-        print("Graphics options: color, lsty and marker must be NULL or equal to the number of treatments and no more than 8.")
-        stop()
+  if (length(color) > 8 | length(lsty) >  8 | length(marker) > 8 |
+      length(color) != ntrts | length(lsty) != ntrts | length(marker) != ntrts) {
+    print("Graphics options: color, lsty and marker must be NULL or equal to the number of treatments and no more than 8.")
+    stop()
+  }
+  if (sum(subset) < 1) {
+    print("Subset must have at least one treatment specified.")
+    stop()
+  }
+  n <- 3
+  if (class(x@model) == "stmodelGLM") noyscale <- TRUE
+  if (together | (subset[1] == 1 & sum(subset) == 1)) n <- 1
+  if (!diff) n <- 1
+
+  if (dev == "") graphics.off()
+
+  for (i in 1:n) {
+    if (dev == "") {
+      if (!rstudioapi::isAvailable()) {
+        dev.new()
       }
-      if (sum(subset) < 1) {
-        print("Subset must have at least one treatment specified.")
-        stop()
+    } else if (dev == "postscript") {
+      fname = paste("SteppPlot", as.character(i), ".ps", sep = "")
+      postscript(file = fname)
+    } else if (dev == "eps") {
+      fname = paste("SteppPlot", as.character(i), ".eps", sep = "")
+      postscript(file = fname)
+    } else if (dev == "pdf") {
+      fname = paste("SteppPlot", as.character(i), ".pdf", sep = "")
+      pdf(file = fname)
+    } else if (dev == "png") {
+      fname = paste("SteppPlot", as.character(i), ".png", sep = "")
+      png(filename = fname)
+    } else if (dev == "bmp") {
+      fname = paste("SteppPlot", as.character(i), ".bmp", sep = "")
+      bmp(filename = fname)
+    } else if (dev == "tiff") {
+      fname = paste("SteppPlot", as.character(i), ".tif", sep = "")
+      tiff(filename = fname)
+    } else if (dev == "jpeg") {
+      fname = paste("SteppPlot", as.character(i), ".jpeg", sep = "")
+      jpeg(filename = fname)
+    } 
+  }
+
+  devlst <- dev.list()
+
+  #   generate the first stepp plot
+  #     STEPP analysis of treatment effect
+  #
+  if (!rstudioapi::isAvailable()) dev.set(devlst[1])
+
+  ncurves <- sum(subset)
+  sell <- which(subset == 1)
+
+  skmObs  <- NULL
+  for (j in 1:ntrts) {
+    if (subset[j] == 1) skmObs <- c(skmObs, TrtEff[[j]]$sObs)
+  }
+  xvalues <- rep(medians, ncurves)
+  if (!noyscale) skmObs <- skmObs * 100
+  group <- rep(1:ncurves, each = nsubpop)
+  lbls <- rep(" ", nsubpop)
+  ssize <- rep(" ", nsubpop)
+  tpatsub <- rep(0, nsubpop)
+
+  for (i in 1:nsubpop) {
+    trtj <- rep(0, ntrts)
+    for (j in 1:ntrts) {
+      subpopj <- colvar[colvar >= minc[i] & colvar <= maxc[i] & txassign == j]
+      trtj[j] <- trtj[j] + sum(!is.na(subpopj))
+    }
+    tpatsub[i] <- sum(trtj)
+  }
+  for (i in 1:nsubpop) ssize[i] <- paste(c("(n=", tpatsub[i], ")"), collapse = "")  
+  
+  if (!issinglegroup) {
+    p <- "supremum pv = "
+    for (j in 2:ntrts) {
+      if (subset[j] == 1) {
+        p <- paste(c(p, Result[[j - 1]]$pvalue), collapse = "")
       }
-      n <- 3
-      if (class(x@model) == "stmodelGLM" ) noyscale <- TRUE
-      if (together | (subset[1] == 1 & sum(subset) == 1)) n <- 1
-      if (!diff) n <- 1
+    }
+  } else {
+    p <- ""
+  }
 
-      if (dev == "") graphics.off()
+  # generate subpopulation distribution subplot if needed
+  if (subplot) {
+    par(fig = c(0, 1, 0, 0.8), omi = c(0.4, 0.4, 0.1, 0.1))
+    # par(fig = c(0, 1, 0.3, 1), omi = c(0.4, 0.4, 0.1, 0.1))
+  } else {
+    par(mfrow = c(1, 1), omi = c(0.4, 0.4, 0.1, 0.1))
+  }
 
-      for (i in 1:n) {
-        if (dev == "") {
-          if (!rstudioapi::isAvailable()) {
-            dev.new()
-          }
+  if (noyscale) {
+    yl <- c(min(skmObs), max(skmObs))
+    # legendy <- max(skmObs) - legendy
+  } else {
+    if (length(ylimit) < 2) {
+      yl <- c(0, 100)
+    } else {
+      yl <- ylimit[1:2]
+    }
+  }
+
+  if (noyscale) {
+    plot(xvalues, skmObs, axes = TRUE, xaxt="n", ylim = yl, ylab = ylabel, xlab = "", type = "n")
+  } else {
+    plot(xvalues, skmObs, axes = FALSE, ylim = yl, ylab = ylabel, xlab = "", type = "n")
+  }
+
+  for (j in 1:ncurves) {
+    points(xvalues[group == j], skmObs[group == j], lty = lsty[sell][j], lwd = 2,
+      pch = marker[sell][j], type = "o", col = color[sell][j], bg = color[sell][j])
+  }
+
+  axis(1, at = xvalues, font = 1)
+
+  if (!noyscale) axis(2, at = c(0, (0:10) * 10), font = 1)
+
+  if (nlas != 3 & nlas != 2) {
+    if (showss) {
+      mtext(ssize, side = 1, at = xvalues, line = 2, font = 1, cex = ncex, adj = 0.5, las = nlas)
+      mtext(xlabel, side = 1, line = 3.5)
+    } else {
+      mtext(xlabel, side = 1, line = 2)
+    }
+  } else {
+    if (showss) {
+      mtext(ssize, side = 1, at = xvalues, line = 3.5, font = 1, cex = ncex, adj = 0.5, las = nlas)
+      mtext(xlabel, side = 1, line = 0.8, outer = TRUE)
+    } else {
+      mtext(xlabel, side = 1, line = 2)
+    }
+  }
+
+  if (!issinglegroup) {
+    legend(min(xvalues), legendy, pch = marker[sell], lty = lsty[sell], lwd = 2, 
+      col = color[sell], pt.bg = color[sell], legend = tlegend[sell], bty = "n")
+  }
+
+  if (pv) {
+    if (is.na(at)) {
+      mtext(p, side = 1, at = (min(xvalues) + 0.2 * (max(xvalues) - min(xvalues))), line = pline)
+    } else {
+      mtext(p, side = 1, at = at, line = pline)
+    }
+  }
+  if (rug) rug(xvalues)
+
+  # WKY 
+  # generate subpopulation distribution subplot
+  if (subplot) {
+    par(fig = c(0, 1, 0.5, 1), new = TRUE)
+    # par(fig = c(0, 1, 0, 0.45), new = TRUE)
+    n.y <- length(xvalues[group == 1])
+    y <- seq(1, n.y)
+    x.min <- rep(0, n.y)
+    x.max <- rep(0, n.y)
+    for (j in 1:n.y){
+      x.min[j] <- minc[j]
+      x.max[j] <- maxc[j]
+    }
+    # plot(xvalues[group == 1], y, axes = 0, cex = 0.5, xaxt = "n", yaxt = "n", xlab = "", ylab = "")
+    plot(xvalues[group == 1], y, cex = 0.5, xaxt = "n", yaxt = "n", xlab = "", ylab = "")
+
+    for (j in 1:n.y) {
+      lines(x = c(x.min[j], x.max[j]), y = c(y[j], y[j]))
+    }
+  }
+
+  if (diff & !issinglegroup) {
+    # pointwise is specified, generate two additional plots
+    subset[1] <- 1  # make sure the baseline trt is included
+    ncurves <- sum(subset)
+    sell <- which(subset == 1)     
+
+    ndcurves <- ncurves - 1
+    if (ndcurves != 0) {
+      if (!together & !rstudioapi::isAvailable()) dev.set(devlst[2])
+
+      if (pointwise) {
+        zcrit <- qnorm(1 - alpha/2)
+      } else {
+        zcrit <- qnorm(1 - alpha/(2*nsubpop))
+      }
+
+      skmObs <- NULL
+      se <- NULL
+      for (j in 2:ntrts) {
+        if (subset[j] == 1) {
+          # skmObs  <- c(skmObs, TrtEff[[j]]$sObs - TrtEff[[1]]$sObs)
+          skmObs <- c(skmObs, TrtEff[[1]]$sObs - TrtEff[[j]]$sObs)
+          se <- c(se, sqrt(TrtEff[[j]]$sSE^2 + TrtEff[[1]]$sSE^2))
         }
-        else
-        if (dev == "postscript") {
-            fname = paste("SteppPlot", as.character(i), ".ps", sep = "")
-            postscript(file = fname)
-        } 
-        else
-        if (dev == "eps") {
-            fname = paste("SteppPlot", as.character(i), ".eps", sep = "")
-            postscript(file = fname)
-        } 
-        else 
-        if (dev == "pdf") {
-            fname = paste("SteppPlot", as.character(i), ".pdf", sep = "")
-            pdf(file = fname)
-        } 
-        else 
-        if (dev == "png") {
-            fname = paste("SteppPlot", as.character(i), ".png", sep = "")
-            png(filename = fname)
-        } 
-        else 
-        if (dev == "bmp") {
-            fname = paste("SteppPlot", as.character(i), ".bmp", sep = "")
-            bmp(filename = fname)
-        } 
-        else 
-        if (dev == "tiff") {
-            fname = paste("SteppPlot", as.character(i), ".tif", sep = "")
-            tiff(filename = fname)
-        } 
-        else 
-        if (dev == "jpeg") {
-            fname = paste("SteppPlot", as.character(i), ".jpeg", sep = "")
-            jpeg(filename = fname)
-        } 
       }
-
-      devlst <- dev.list()
-
-      #   generate the first stepp plot
-      #     STEPP analysis of treatment effect as measured
-      #     by KM/HR or cumulative incidence.
-      #
-      if (!rstudioapi::isAvailable()) dev.set(devlst[1])
-
-      ncurves <- sum(subset)
-      sell    <- which(subset == 1)
-
-      skmObs  <- NULL
-      for (j in 1:ntrts) {
-        if (subset[j] == 1) skmObs <- c(skmObs, TrtEff[[j]]$sObs)
-      }
-      xvalues <- rep(medians, ncurves)
+      xvalues <- rep(medians, ndcurves)
       if (!noyscale) skmObs <- skmObs * 100
-      group   <- rep(1:ncurves, each = nsubpop)
-      lbls    <- rep(" ", nsubpop)
-      ssize   <- rep(" ", nsubpop)
-      tpatsub <- rep(0, nsubpop)
+      group <- rep(1:ndcurves, each = nsubpop)
 
-      for (i in 1:nsubpop){
-        trtj <- rep(0, ntrts)
-        for (j in 1:ntrts){
-          subpopj <- colvar[colvar >= minc[i] & colvar <= maxc[i] & txassign == j]
-          trtj[j] <- trtj[j] + sum(!is.na(subpopj))
+      lbls <- rep(" ", nsubpop)
+
+      # ssize <- rep(" ", nsubpop)
+      # for (i in 1:nsubpop) ssize[i] <- paste(c("(n=", tpatsub[i], ")"), collapse = "")
+
+      # already done, no need to repeat for pvalue
+      par(mfrow = c(1, 1), omi = c(0.4, 0.4, 0.1, 0.1))
+
+      if (noyscale) {
+        ext <- (max(skmObs) - min(skmObs))*0.5
+        yl <- c(min(skmObs) - ext, max(skmObs) + ext)
+      } else {
+        if (length(ylimit) < 4) {
+          yl <- c(-100, 100)
+        } else {
+          yl <- ylimit[3:4]
         }
-        tpatsub[i] <- sum(trtj)
       }
-      for (i in 1:nsubpop) ssize[i] <- paste(c("(n=", tpatsub[i], ")"), collapse = "")  
-      
-      if (!issinglegroup) {
-        p <- "supremum pv = "
-        for (j in 2:ntrts) {
-          if (subset[j] == 1) {
-            p <- paste(c(p, Result[[j - 1]]$pvalue), collapse = "")
-          }
+    
+      if (noyscale) {
+        plot(xvalues, skmObs, axes = TRUE, xaxt="n", ylim = yl,
+          ylab = paste("Difference in",ylabel), xlab = "", type = "n")
+      } else {
+        plot(xvalues, skmObs, axes = FALSE, ylim = yl,
+          ylab = paste("Difference in",ylabel), xlab = "", type = "n")
+      }
+
+      for (j in 1:ndcurves) {
+        points(xvalues[group == j], skmObs[group == j], lty = lsty[sell][j + 1],
+          lwd = 2, pch = marker[sell][j + 1], type = "o", col = color[sell][j + 1],
+          bg = color[sell][j + 1])
+      }
+      if (rug) rug(xvalues)
+
+      if (ci) {
+        if (!noyscale) {
+          cilim <- skmObs - zcrit*se*100
+          cilim <- pmax(cilim,-100)
+        } else {
+          cilim <- skmObs - zcrit*se
+        }
+
+        for (j in 1:ndcurves) {
+          lines(xvalues[group == j], cilim[group == j], lty = 2, lwd = 2,
+            col = color[sell][j + 1], bg = color[sell][j + 1])
+        }
+        if (!noyscale) {
+          cilim <- skmObs + zcrit*se*100
+          cilim <- pmin(cilim,100)
+        } else { 
+          cilim <- skmObs + zcrit*se
+        }
+
+        for (j in 1:ndcurves) {
+          lines(xvalues[group == j], cilim[group == j], lty = 2, lwd = 2,
+            col = color[sell][j + 1], bg = color[sell][j + 1])
+        }
+      }
+
+      abline(h = 0, lty = 1)
+
+      axis(1, at = xvalues, font = 1)
+      if (!noyscale) axis(2, at = c(0, (-10:10) * 10), font = 1)
+      if (nlas != 3 & nlas != 2) {
+        if (showss) {
+          mtext(ssize, side = 1, at = xvalues, line = 2, font = 1, cex = ncex, adj = 0.5, las = nlas)
+          mtext(xlabel, side = 1, line = 3.5)
+        } else {
+          mtext(xlabel, side = 1, line = 2)
         }
       } else {
-        p <- ""
-      }
-
-      # generate subpopulation distribution subplot if needed
-      if (subplot) {
-        par(fig=c(0,1,0,0.8), omi = c(0.4, 0.4, 0.1, 0.1))
-        #par(fig=c(0,1,0.3,1), omi = c(0.4, 0.4, 0.1, 0.1))
-      }
-      else par(mfrow = c(1, 1), omi = c(0.4, 0.4, 0.1, 0.1))
-
-          if (noyscale) {
-        yl      <- c(min(skmObs), max(skmObs))
-        legendy <- max(skmObs) - legendy
-          }
-          else
-          if (length(ylimit) < 2) yl <- c(0,100)
-          else yl   <- ylimit[1:2]
-
-          if (noyscale)
-        plot(xvalues, skmObs, axes = TRUE, xaxt="n", ylim = yl, ylab = ylabel, xlab = "", type = "n")
-          else
-            plot(xvalues, skmObs, axes = FALSE, ylim = yl, ylab = ylabel, xlab = "", type = "n")
-
-      for (j in 1:ncurves) {
-            points(xvalues[group == j], skmObs[group == j], lty = lsty[sell][j], lwd = 2, pch = marker[sell][j], type = "o",
-           col = color[sell][j], bg = color[sell][j])
-      }
-
-          axis(1, at = xvalues, font = 1)
-
-          if (!noyscale) axis(2, at = c(0, (0:10) * 10), font = 1)
- 
-          if (nlas != 3 & nlas != 2) {
-              if (showss) {
-              mtext(ssize, side = 1, at = xvalues, line = 2, font = 1, cex = ncex, adj = 0.5, las = nlas)
-                  mtext(xlabel, side = 1, line = 3.5)
-          } else 
-            mtext(xlabel, side = 1, line = 2)
-              }
-          if (nlas == 3 | nlas == 2) {
-              if (showss) {
-              mtext(ssize, side = 1, at = xvalues, line = 3.5, font = 1, cex = ncex, adj = 0.5, las = nlas)
-                  mtext(xlabel, side = 1, line = 0.8, outer = TRUE)
-          } else
-              mtext(xlabel, side = 1, line = 2)
-        }
-
-            if (!issinglegroup) {
-              legend(min(xvalues), legendy, pch = marker[sell], lty = lsty[sell], lwd = 2, 
-               col = color[sell], pt.bg = color[sell], legend = tlegend[sell], bty = "n")
-            }
-    
-              if (pv) {
-        if (is.na(at)) mtext(p, side = 1, at = (min(xvalues) + 0.2 * (max(xvalues) - min(xvalues))), line = pline)
-        else mtext(p, side = 1, at = at, line = pline)
-      }
-              if (rug) rug(xvalues)
-
-
-      # WKY 
-      # generate subpopulation distribution subplot
-      if (subplot) {
-        par(fig=c(0,1,0.5,1),new=TRUE)
-        #par(fig=c(0,1,0,0.45),new=TRUE)
-        n.y <- length(xvalues[group==1])
-        y   <- seq(1,n.y)
-        x.min <- rep(0,n.y)
-        x.max <- rep(0,n.y)
-        for (j in 1:n.y){
-          x.min[j] <- minc[j]
-          x.max[j] <- maxc[j]
-        }
-        #plot(xvalues[group==1],y, axes=0 ,cex=0.5, xaxt="n", yaxt="n", xlab="", ylab="")
-        plot(xvalues[group==1],y, cex=0.5, xaxt="n", yaxt="n", xlab="", ylab="")
-
-        for (j in 1:n.y){
-          lines(x=c(x.min[j],x.max[j]),y=c(y[j],y[j]))
-        }
-
-      }
-
-      if (diff & !issinglegroup) {
-        # pointwise is specified, generate two additional plots
-        #
-        subset[1] <- 1      # make sure the baseline trt is included
-        ncurves <- sum(subset)
-        sell    <- which(subset == 1)     
-
-        ndcurves <- ncurves - 1
-        if (ndcurves != 0) {
-
-        if (!together & !rstudioapi::isAvailable()) dev.set(devlst[2])
-
-        if (pointwise) {
-          zcrit <- qnorm(1 - alpha/2)
+        if (showss) {
+          mtext(ssize, side = 1, at = xvalues, line = 3.5, font = 1, cex = ncex, adj = 0.5, las = nlas)
+          mtext(xlabel, side = 1, line = 0.8, outer = TRUE)
         } else {
-          zcrit <- qnorm(1 - alpha/(2*nsubpop))
+          mtext(xlabel, side = 1, line = 2)
         }
+      }
 
-        skmObs   <- NULL
-        se       <- NULL
-        for (j in 2:ntrts) {
-          if (subset[j] == 1) {
-        #skmObs  <- c(skmObs, TrtEff[[j]]$sObs-TrtEff[[1]]$sObs)
-        skmObs  <- c(skmObs, TrtEff[[1]]$sObs-TrtEff[[j]]$sObs)
-        se    <- c(se, sqrt(TrtEff[[j]]$sSE^2+TrtEff[[1]]$sSE^2))
-          }
+      if (pv) {
+        if (is.na(at)) {
+          mtext(p, side = 1, at = (min(xvalues) + 0.2 * (max(xvalues) - min(xvalues))), line = pline)
+        } else {
+          mtext(p, side = 1, at = at, line = pline)
         }
-            xvalues <- rep(medians, ndcurves)
-            if (!noyscale) skmObs <- skmObs * 100
-            group   <- rep(1:ndcurves, each = nsubpop)
-
-            lbls <- rep(" ", nsubpop)
-
-            #ssize <- rep(" ", nsubpop)
-          #for (i in 1:nsubpop) ssize[i] <- paste(c("(n=", tpatsub[i], ")"), collapse = "")       
-
-        # already done, no need to repeat for pvalue
-              par(mfrow = c(1, 1), omi = c(0.4, 0.4, 0.1, 0.1))
- 
-        if (noyscale){
-            ext <- (max(skmObs) - min(skmObs))*0.5
-            yl <- c(min(skmObs)-ext, max(skmObs)+ext)
-        }
-        else
-            if (length(ylimit) < 4) yl <- c(-100,100)
-            else yl <- ylimit[3:4]
-        
-        if (noyscale)
-          plot(xvalues, skmObs, axes = TRUE, xaxt="n", ylim = yl, ylab = paste("Difference in",ylabel), xlab = "",
-            type = "n")
-        else 
-          plot(xvalues, skmObs, axes = FALSE, ylim = yl, ylab = paste("Difference in",ylabel), xlab = "",
-            type = "n")
-
-        for (j in 1:ndcurves){
-              points(xvalues[group == j], skmObs[group == j], lty = lsty[sell][j+1], lwd = 2, pch = marker[sell][j+1], 
-             type = "o", col = color[sell][j+1], bg = color[sell][j+1])
-        }
-        if (rug) rug(xvalues)
-
-            if(ci){
-              if (!noyscale){
-                    cilim <- skmObs - zcrit*se*100
-                    cilim <- pmax(cilim,-100)
-              } else cilim <- skmObs - zcrit*se
-           
-          for (j in 1:ndcurves){
-                    lines(xvalues[group == j], cilim[group == j], lty = 2, lwd = 2, col = color[sell][j+1], bg = color[sell][j+1])
-          }
-                  if (!noyscale){
-            cilim <- skmObs + zcrit*se*100
-                    cilim <- pmin(cilim,100)
-              } else cilim <- skmObs + zcrit*se
-
-          for (j in 1:ndcurves){
-                    lines(xvalues[group == j], cilim[group == j], lty = 2, lwd = 2, col = color[sell][j+1], bg = color[sell][j+1])
-          }
-                }
-
-                lines(c(min(xvalues),max(xvalues)),c(0,0),lty=1)
-                axis(1, at = xvalues, font = 1)
-                if (!noyscale) axis(2, at = c(0, (-10:10) * 10), font = 1)
-                if (nlas != 3 & nlas != 2) {
-                      if (showss) {
-                mtext(ssize, side = 1, at = xvalues, line = 2, font = 1, cex = ncex, adj = 0.5, las = nlas)
-                    mtext(xlabel, side = 1, line = 3.5)
-              } else
-                  mtext(xlabel, side = 1, line = 2)
-                }
-                if (nlas == 3 | nlas == 2) {
-                  if (showss) {
-                mtext(ssize, side = 1, at = xvalues, line = 3.5, font = 1, cex = ncex, adj = 0.5, las = nlas)
-                    mtext(xlabel, side = 1, line = 0.8, outer = TRUE)
-              } else
-              mtext(xlabel, side = 1, line = 2)
-                }
-
-                if (pv) {
-          if (is.na(at)) mtext(p, side = 1, at = (min(xvalues) + 0.2 * (max(xvalues) - min(xvalues))), line = pline)
-          else mtext(p, side = 1, at = at, line = pline)
-        }
+      }
 
       if (!together & !rstudioapi::isAvailable()) dev.set(devlst[3])
-          if (class(x@model) == "stmodelKM" | class(x@model) == "stmodelCI" | class(x@model) == "stmodelCOX"){
-              #Rpvalue<- x@result$HRpvalue
-              #logR   <- x@effect$logHR
-              #logRSE <- x@effect$logHRSE
-        text1  <- "Supremum HR p-value = "
-        if (class(x@model) == "stmodelCI") text2 <- "Subdistribution Hazard Ratio"
-        else text2  <- "Hazard Ratio"
+      if (class(x@model) != "stmodelGLM") {
+        # Rpvalue <- x@result$HRpvalue
+        # logR <- x@effect$logHR
+        # logRSE <- x@effect$logHRSE
+        text1 <- "Supremum HR p-value = "
+        if (class(x@model) == "stmodelCI") {
+          text2 <- "Subdistribution Hazard Ratio"
+        } else {
+          text2  <- "Hazard Ratio"
+        }
       } else {
-              #Rpvalue<- x@result$logRpvalue
-              #logR   <- x@effect$logR
-              #logRSE <- x@effect$logRSE
-        if (x@model@glm=="gaussian"){
-          text1  <- "Supremum Effect Ratio p-value = "
-          text2  <- paste(ylabel, "Ratio")
-        } else 
-        if (x@model@glm=="binomial"){
-          text1  <- "Supremum Odds Ratio p-value = "
-          text2  <- "Odds Ratio"
-        } else
-        if (x@model@glm=="poisson"){
-          text1  <- "Supremum Risks Ratio p-value = "
-          text2  <- "Risks Ratio"
+        # Rpvalue <- x@result$logRpvalue
+        # logR <- x@effect$logR
+        # logRSE <- x@effect$logRSE
+        if (x@model@glm == "gaussian") {
+          text1 <- "Supremum Effect Ratio p-value = "
+          text2 <- paste(ylabel, "Ratio")
+        } else if (x@model@glm == "binomial") {
+          text1 <- "Supremum Odds Ratio p-value = "
+          text2 <- "Odds Ratio"
+        } else if (x@model@glm == "poisson") {
+          text1 <- "Supremum Risks Ratio p-value = "
+          text2 <- "Risks Ratio"
         }
       }
-        p <- "supremum pv = "
-        for (j in 2:ntrts){
-          if (subset[j] == 1){
-                p <- paste(c(p, Result[[j - 1]]$HRpvalue), collapse = "")
-          }
+      p <- "supremum pv = "
+      for (j in 2:ntrts) {
+        if (subset[j] == 1) {
+          p <- paste(c(p, Result[[j - 1]]$HRpvalue), collapse = "")
         }
-              par(mfrow = c(1, 1), omi = c(0.5, 0.5, 0.5, 0.5))
-              if (length(ylimit) < 6) yl = c(0,3)
-          else yl = ylimit[5:6]
+      }
+      par(mfrow = c(1, 1), omi = c(0.5, 0.5, 0.5, 0.5))
+      if (length(ylimit) < 6) {
+        yl <- c(0,3)
+      } else {
+        yl <- ylimit[5:6]
+      }
 
-        logHR   <- NULL
-        logHRSE <- NULL
-        for (j in 2:ntrts) {
-          if (subset[j] == 1) {
-        logHR   <- c(logHR, Ratios[[j - 1]]$logHR)
-        logHRSE <- c(logHRSE, Ratios[[j - 1]]$logHRSE)
-          }
+      logHR <- NULL
+      logHRSE <- NULL
+      for (j in 2:ntrts) {
+        if (subset[j] == 1) {
+          logHR <- c(logHR, Ratios[[j - 1]]$logHR)
+          logHRSE <- c(logHRSE, Ratios[[j - 1]]$logHRSE)
         }
+      }
 
-        sObs <- exp(logHR)
-        plot(xvalues, exp(logHR), axes = FALSE, ylim = yl, ylab = text2, xlab = "", type = "n")
-        for (j in 1:ndcurves){
-              points(xvalues[group == j], sObs[group == j], lty = lsty[sell][j+1], lwd = 2, pch = marker[sell][j+1], 
-          type = "o", col = color[sell][j+1], bg = color[sell][j+1])
+      sObs <- exp(logHR)
+      plot(xvalues, exp(logHR), axes = FALSE, ylim = yl, ylab = text2, xlab = "", type = "n")
+      for (j in 1:ndcurves) {
+        points(xvalues[group == j], sObs[group == j], lty = lsty[sell][j + 1],
+          lwd = 2, pch = marker[sell][j + 1], type = "o", col = color[sell][j + 1],
+          bg = color[sell][j + 1])
+      }
+
+      if (ci) {
+        cilim <- logHR - zcrit*logHRSE
+        cilim <- exp(cilim)
+        for (j in 1:ndcurves) {
+          lines(xvalues[group == j], cilim[group == j], lty = 2, lwd = 2,
+            col = color[sell][j + 1], bg = color[sell][j + 1])
         }
+        cilim <- logHR + zcrit*logHRSE
+        cilim <- exp(cilim)
+        for (j in 1:ndcurves) {
+          lines(xvalues[group == j], cilim[group == j], lty = 2, lwd = 2,
+            col = color[sell][j + 1], bg = color[sell][j + 1])
+        }
+      }
 
-              if(ci){
-                  cilim <- logHR - zcrit*logHRSE
-                  cilim <- exp(cilim)
-          for (j in 1:ndcurves){
-                    lines(xvalues[group == j], cilim[group == j], lty = 2, lwd = 2, col = color[sell][j+1], bg = color[sell][j+1])
-          }
-                  cilim <- logHR + zcrit*logHRSE
-                  cilim <- exp(cilim)
-          for (j in 1:ndcurves){
-                    lines(xvalues[group == j], cilim[group == j], lty = 2, lwd = 2, col = color[sell][j+1], bg = color[sell][j+1])
-          }
-              }
-              lines(c(min(xvalues),max(xvalues)),c(1,1),lty=1)
-              axis(1, at = xvalues, font = 1)
-              axis(2, at = c(0, (0:15)*.2), font = 1)
-              if (nlas != 3 & nlas != 2) {
-                  if (showss) {
-                mtext(ssize, side = 1, at = xvalues, line = 2, font = 1, cex = ncex, adj = 0.5, las = nlas)
-                    mtext(xlabel, side = 1, line = 3.5)
-              } else
+      abline(h = 1, lty = 1)
+      axis(1, at = xvalues, font = 1)
+      axis(2, at = c(0, (0:15)*.2), font = 1)
+      if (nlas != 3 & nlas != 2) {
+        if (showss) {
+        mtext(ssize, side = 1, at = xvalues, line = 2, font = 1, cex = ncex, adj = 0.5, las = nlas)
+        mtext(xlabel, side = 1, line = 3.5)
+        } else {
           mtext(xlabel, side = 1, line = 2)
-              }
-              if (nlas == 3 | nlas == 2) {
-                  if (showss) {
-            mtext(ssize, side = 1, at = xvalues, line = 3.5, font = 1, cex = ncex, adj = 0.5, las = nlas)
-                    mtext(xlabel, side = 1, line = 0.8, outer = TRUE)
-              } else
-          mtext(xlabel, side = 1, line = 2)
-              }
-
-              if (pv) {
-          if (is.na(at)) mtext(p, side = 1, at = (min(xvalues) + 0.2 * (max(xvalues) - min(xvalues))), line = pline)
-          else mtext(p, side = 1, at = at, line = pline)
         }
-          }
-        } 
-            for(i in 1:n) {
-          if (dev != "" & !rstudioapi::isAvailable()) dev.off(devlst[i])
-            }
-}# end of worker function
+      } else {
+        if (showss) {
+          mtext(ssize, side = 1, at = xvalues, line = 3.5, font = 1, cex = ncex, adj = 0.5, las = nlas)
+          mtext(xlabel, side = 1, line = 0.8, outer = TRUE)
+        } else {
+          mtext(xlabel, side = 1, line = 2)
+        }
+      }
 
-#
+      if (pv) {
+        if (is.na(at)) {
+          mtext(p, side = 1, at = (min(xvalues) + 0.2 * (max(xvalues) - min(xvalues))), line = pline)
+        } else {
+          mtext(p, side = 1, at = at, line = pline)
+        }
+      }
+    }
+  }
+
+  for (i in 1:n) {
+    if (dev != "" & !rstudioapi::isAvailable()) dev.off(devlst[i])
+  }
+} # end of worker function
+
 # S3 method
 plot.steppes <- function(x, y, legendy = 30, pline = -2.5, color = c("red", "black"),
   ylabel = "Specify Timepoint & Endpoint",

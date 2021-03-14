@@ -2,7 +2,7 @@ Package: stepp
 Type: Package
 Title: Subpopulation Treatment Effect Pattern Plot (STEPP)
 Version: 3.2.3
-Date: 2021-03-02
+Date: 2021-03-10
 Author: Wai-ki Yip [aut, cre],
     Ann Lazar [ctb],
     David Zahrieh [ctb],
@@ -15,7 +15,7 @@ Author: Wai-ki Yip [aut, cre],
     Richard Gelber [ctb]
 Maintainer: Wai-ki Yip <yuser86@yahoo.com>,
     Sergio Venturini <sergio.venturini@unito.it> 
-Imports: rstudioapi, scales
+Imports: rstudioapi
 Depends: methods, car, survival, splines
 Collate: 
   'zzz.R'
@@ -38,7 +38,7 @@ Description: A method to explore the treatment-covariate interactions in surviva
 	Ann A. Lazar, Bernard F. Cole, Marco Bonetti, and Richard D. Gelber (2010) <doi:10.1200/JCO.2009.27.9182>.
 	Lazar AA,Bonetti M,Cole BF,Yip WK,Gelber RD (2016) <doi:10.1177/1740774515609106>.
  	Wai-Ki Yip,Marco Bonetti,Bernard F Cole,William Barcella,Xin Victoria Wang,Ann Lazar,and Richard D Gelber (2016) <doi:10.1177/1740774516643297>.
-	Wang XV, Cole B, Bonetti M, Gelber RD (2016) <doi:10.1002/sim.6958>.
+	Wang XV, Cole B, Bonetti M, Gelber RD (2016) < doi:10.1002/sim.6958>.
 	Wai-Ki Yip (2017, ISBN:978-3-319-48846-2).
 License: GPL (>= 2)
 URL: https://www.r-project.org
