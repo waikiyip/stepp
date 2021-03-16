@@ -353,7 +353,7 @@ setMethod("summary",
       cat("\n")
       write("Treatments Sample Size Information (with only specified treatments)", file="")
       trttitle <- paste(paste("trt",trts),"  ", collapse="")
-      write(paste("      Subpopulation    ", trttitle, "Total"), file="")
+      write(paste("     Subpopulation    ", trttitle, "Total"), file="")
       for (i in 1:nsubpop) {
         trtj <- rep(0, ntrts)
         for (j in 1:ntrts) {
@@ -370,36 +370,37 @@ setMethod("summary",
       cat("\n")
       write("(To display subpopulation distribution together with the first STEPP Plot, use the 'subplot' option in the plot function.)",file="")
     }
-    cat("\n")
+    # cat("\n")
   }
 )
 
 setMethod("print",
-    signature = "steppes",
-    definition = function(x, estimate=TRUE, cov=TRUE, test=TRUE, ...) {
-    ntrts <- x@effect$ntrts
-    n <- 0
-    # cat("\n")
-    for (j in 1:ntrts) {
-      nj <- sum(x@model@coltrt==x@model@trts[j])
-      n  <- n + nj
-      if (ntrts > 1) {
-        write(paste0("Sample size in treatment ", x@model@trts[j], ": ", nj), file="")
-      }
+  signature = "steppes",
+  definition = function(x, estimate=TRUE, cov=TRUE, test=TRUE, ...) {
+  ntrts <- x@effect$ntrts
+  n <- 0
+  # cat("\n")
+  for (j in 1:ntrts) {
+    nj <- sum(x@model@coltrt==x@model@trts[j])
+    n  <- n + nj
+    if (ntrts > 1) {
+      write(paste0("Sample size in treatment ", x@model@trts[j], ": ", nj), file="")
     }
-    write(paste0("Total sample size (excluding missing data): ", n), file="")
-    print(x@model, x, estimate, cov, test, ...)
+  }
+  write(paste0("Total sample size (excluding missing data): ", n), file="")
+  cat("\n")
+  print(x@model, x, estimate, cov, test, ...)
 
-    if (test & ntrts > 1)
-      write("Note: The p-values are not adjusted for multiple testing.",file="")
-    }
+  if (test & ntrts > 1)
+    write("Note: The p-values are not adjusted for multiple testing.",file="")
+  }
 )
 
 #
 # Internal worker routine for plot
 .Stepp.plot <- function(x, y, legendy, pline, at, color, ylabel, xlabel, ncex, tlegend,
   nlas, alpha, pointwise, diff, ci, pv, showss, ylimit, dev, together, noyscale, rug,
-  lsty, marker, subset, subplot, ...) {
+  lsty, marker, subset, subplot, legend_diff, ...) {
 
   Result        <- x@result$Res
   nperm         <- x@nperm
@@ -484,9 +485,7 @@ setMethod("print",
 
   devlst <- dev.list()
 
-  #   generate the first stepp plot
-  #     STEPP analysis of treatment effect
-  #
+  # first plot (estimates)
   if (!rstudioapi::isAvailable()) dev.set(devlst[1])
 
   ncurves <- sum(subset)
@@ -615,6 +614,7 @@ setMethod("print",
     ncurves <- sum(subset)
     sell <- which(subset == 1)     
 
+    # second plot (treatment effect estimates)
     ndcurves <- ncurves - 1
     if (ndcurves != 0) {
       if (!together & !rstudioapi::isAvailable()) dev.set(devlst[2])
@@ -725,6 +725,12 @@ setMethod("print",
         }
       }
 
+      if (!is.null(legend_diff) & length(legend_diff) == 2) {
+        plc <- switch(legend_diff[1], "topleft", "topright", "bottomright", "bottomleft")
+        legend(x = plc, legend = paste(tlegend, collapse = " vs. "), bty = "n")
+      }
+
+      # third plot (ratio estimates)
       if (!together & !rstudioapi::isAvailable()) dev.set(devlst[3])
       if (class(x@model) != "stmodelGLM") {
         # Rpvalue <- x@result$HRpvalue
@@ -822,6 +828,11 @@ setMethod("print",
           mtext(p, side = 1, at = at, line = pline)
         }
       }
+
+      if (!is.null(legend_diff) & length(legend_diff) == 2) {
+        plc <- switch(legend_diff[2], "topleft", "topright", "bottomright", "bottomleft")
+        legend(x = plc, legend = paste(tlegend, collapse = " vs. "), bty = "n")
+      }
     }
   }
 
@@ -840,7 +851,7 @@ plot.steppes <- function(x, y, legendy = 30, pline = -2.5, color = c("red", "bla
   together = FALSE, noyscale = FALSE, rug = FALSE, at = NA, subplot=FALSE, ...) {
   return(.Stepp.plot(x, y, legendy, pline, at, color, ylabel, xlabel, ncex, tlegend,
     nlas, alpha, pointwise, diff, ci, pv, showss, ylimit, dev,
-    together, noyscale, rug, subplot, ...))
+    together, noyscale, rug, subplot, legend_diff, ...))
 }
 
 setMethod("plot",
@@ -876,10 +887,12 @@ setMethod("plot",
     marker = NULL,    #   marker style used in the plots (correspond to marker style in R)
     subset = NULL,    #   subsets of treatment effects to be plotted; default is all
     subplot = FALSE,    #   show subpopulation distribution plot together with the plot
+    legend_diff = rep(1, 2),    #   placements of the legend in the 2nd and 3rd graph
+                                #   (1 = "topleft", 2 = "topright", etc., NULL = no legend)
     ... ) {
   return(.Stepp.plot(x, y, legendy, pline, at, color, ylabel, xlabel, ncex, tlegend,
         nlas, alpha, pointwise, diff, ci, pv, showss, ylimit, dev,
-        together, noyscale, rug, lsty, marker, subset, subplot, ...))
+        together, noyscale, rug, lsty, marker, subset, subplot, legend_diff, ...))
   }
 )
 

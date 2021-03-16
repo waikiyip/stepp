@@ -51,6 +51,7 @@
   \item{noyscale}{optional - do not scale to the y-axis; default is FALSE}
   \item{at}{optional - specify the horizontal position of the p-value; use together with pline; default is at the minimal value of x}
   \item{subplot}{optional - generate a subpopulation distribution subplot on top of the first STEPP plot; default is FALSE (no subplot)}
+  \item{legend_diff}{optional - length-two numerical vector providing the legend positions for the second and third plot; allowed values are \code{1} corresponding to \code{"topleft"},  \code{1} corresponding to \code{"topright"},  \code{3} corresponding to \code{"bottomright"} and \code{4} corresponding to \code{"bottomleft"}, while \code{NULL} skips the legends}
 }
 
 \details{
