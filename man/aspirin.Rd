@@ -49,7 +49,7 @@ detach(aspirinc)
 trtA     <- rep(0, dim(aspirin1)[1])
 trtA[aspirin1[,"DOSE"] == 81] <- 1
 
-# STEPP analysis A: placebo vs 81 mg aspirin
+# STEPP analysis A: placebo vs. 81 mg aspirin
 attach(aspirin1)
 inc_win     <- stepp.win(type="sliding", r1=30, r2=100)
 inc_sp      <- stepp.subpop(swin=inc_win, cov=AGE)
