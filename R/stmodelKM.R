@@ -257,6 +257,9 @@ setMethod("estimate",
   signature = "stmodelKM",
   definition = function(.Object, sp, ...) {
     modtype   <- sp@win@type
+    if (modtype == "sliding_events") {
+      stop("Currently event-based sliding windows are available only for competing risks analyses.")
+    }
     nsubpop   <- sp@nsubpop
     subpop    <- sp@subpop
     coltrt    <- .Object@coltrt

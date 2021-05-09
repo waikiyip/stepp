@@ -391,8 +391,8 @@ setMethod("print",
   cat("\n")
   print(x@model, x, estimate, cov, test, ...)
 
-  if (test & ntrts > 1)
-    write("Note: The p-values are not adjusted for multiple testing.",file="")
+  # if (test & ntrts > 1)
+  #   write("Note: The p-values are not adjusted for multiple testing.",file="")
   }
 )
 
