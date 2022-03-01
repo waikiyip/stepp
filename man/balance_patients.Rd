@@ -13,7 +13,7 @@
 
 \usage{
   balance_patients(range_r1, range_r2, maxnsubpops, covar, verbose = FALSE,
-    plot = FALSE, contour = FALSE, nlevels = 5)
+    plot = FALSE, contour = FALSE, nlevels = 5, showstatus = TRUE)
 }
 
 \arguments{

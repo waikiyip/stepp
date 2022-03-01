@@ -45,19 +45,19 @@ plot(resCI_e, legendy = 50,
      tlegend = c("Letrozole", "Tamoxifen"), nlas = 3, alpha = 0.05,
      pointwise = FALSE)
 
-# estimate and test the KM model
-steppes_e <- new("steppes")
-modKM_e <- new("stmodelKM", coltrt = rxgroup, trts = c(1, 2), survTime = time,
-  censor = evt, timePoint = 4)
-resKM_e <- estimate(steppes_e, subp_e, modKM_e)
-print(resKM_e)
-set.seed(101)
-noperm <- 100
-resKM_e <- test(resKM_e, noperm)
-print(resKM_e)
-plot(resKM_e, ylabel = "4 year DFS",
-     xlabel = "Subpopulations by Median Ki-67", ncex = 0.7,
-     tlegend = c("Letrozole", "Tamoxifen"), nlas = 3, alpha = 0.05)
+# # estimate and test the KM model
+# steppes_e <- new("steppes")
+# modKM_e <- new("stmodelKM", coltrt = rxgroup, trts = c(1, 2), survTime = time,
+#   censor = evt, timePoint = 4)
+# resKM_e <- estimate(steppes_e, subp_e, modKM_e)
+# print(resKM_e)
+# set.seed(101)
+# noperm <- 100
+# resKM_e <- test(resKM_e, noperm)
+# print(resKM_e)
+# plot(resKM_e, ylabel = "4 year DFS",
+#      xlabel = "Subpopulations by Median Ki-67", ncex = 0.7,
+#      tlegend = c("Letrozole", "Tamoxifen"), nlas = 3, alpha = 0.05)
 
 ### Example 2 ###
 
@@ -130,50 +130,50 @@ maxnsubpops <- 30
 
 res_bal <- balance_patients(ranger1, ranger2, maxnsubpops, bigKM$ki67,
                             plot = TRUE, verbose = TRUE, contour = TRUE,
-                            nlevels = 6, border = TRUE)
+                            nlevels = 6)
 
-### Examples for 'tail-oriented' windows ###
-
-library(stepp)
-
-set.seed(101)
-Y <- rnorm(100)
-summary(Y)
-
-nsubpop <- 10
-tt <- gen.tailwin(Y, nsub = nsubpop, dir = "LE")
-ss <- stepp.win(type = "tail-oriented", r1 = tt$v, r2 = rep(min(Y), nsubpop))
-
-# create and generate the stepp subpopulation
-sp <- new("stsubpop")
-sp <- generate(sp, win = ss, cov = Y)
-summary(sp)
-
-# ---
-
-nsubpop <- 10
-tt <- gen.tailwin(Y, nsub = nsubpop, dir = "GE")
-ss <- stepp.win(type = "tail-oriented", r1 = rep(max(Y), nsubpop), r2 = tt$v)
-
-# create and generate the stepp subpopulation
-sp <- new("stsubpop")
-sp <- generate(sp, win = ss, cov = Y)
-summary(sp)
-
-# ---
-
-win1 <- stepp.win(type="sliding", r1=5,r2=99)
-
-# create and generate the stepp subpopulation
-sp <- new("stsubpop")
-sp <- generate(sp, win = win1, cov = Y)
-summary(sp)
-
-###
-
-# debugonce(generate, signature = "stsubpop")
-# debugonce(generate.all)
-# debug(gen.tailwin)
+# ### Examples for 'tail-oriented' windows ###
+# 
+# library(stepp)
+# 
+# set.seed(101)
+# Y <- rnorm(100)
+# summary(Y)
+# 
+# nsubpop <- 10
+# tt <- gen.tailwin(Y, nsub = nsubpop, dir = "LE")
+# ss <- stepp.win(type = "tail-oriented", r1 = tt$v, r2 = rep(min(Y), nsubpop))
+# 
+# # create and generate the stepp subpopulation
+# sp <- new("stsubpop")
+# sp <- generate(sp, win = ss, cov = Y)
+# summary(sp)
+# 
+# # ---
+# 
+# nsubpop <- 10
+# tt <- gen.tailwin(Y, nsub = nsubpop, dir = "GE")
+# ss <- stepp.win(type = "tail-oriented", r1 = rep(max(Y), nsubpop), r2 = tt$v)
+# 
+# # create and generate the stepp subpopulation
+# sp <- new("stsubpop")
+# sp <- generate(sp, win = ss, cov = Y)
+# summary(sp)
+# 
+# # ---
+# 
+# win1 <- stepp.win(type="sliding", r1=5,r2=99)
+# 
+# # create and generate the stepp subpopulation
+# sp <- new("stsubpop")
+# sp <- generate(sp, win = win1, cov = Y)
+# summary(sp)
+# 
+# ###
+# 
+# # debugonce(generate, signature = "stsubpop")
+# # debugonce(generate.all)
+# # debug(gen.tailwin)
 
 ###
 
