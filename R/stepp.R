@@ -58,12 +58,12 @@ stepp_print <- function(x, estimate=TRUE, cov=TRUE, test=TRUE) {
 stepp_plot <- function(x, legendy = 30, pline = -2.5, color = c("red", "black"),
 	ylabel= "Specify Timepoint & Endpoint", xlabel="Subpopulations by Median Covariate",
 	ncex = 0.7, tlegend=c("Specify 1st Treatment", "Specify 2nd Treatment"), 
-	nlas = 0, alpha = 0.05, pointwise = FALSE, diff = TRUE, ci = TRUE, pv = TRUE, 
-	showss = TRUE, ylimit=c(0,100,-100,100,0,3), dev="", together=FALSE, noyscale=FALSE, at=NA, subplot=FALSE) {
+	nlas = 0, alpha = 0.05, pointwise = FALSE, ci = TRUE, pv = TRUE, 
+	showss = TRUE, ylimit=c(0,100,-100,100,0,3), which="", noyscale=FALSE, at=NA, subplot=FALSE) {
   plot(x, legendy=legendy, pline=pline, color=color,
 		ylabel=ylabel, xlabel=xlabel, ncex=ncex, tlegend=tlegend, nlas=nlas, alpha=alpha, 
-		pointwise=pointwise, diff=diff, ci=ci, pv=pv, showss=showss, ylimit=ylimit, 
-		dev=dev, together=together, noyscale=noyscale, at=at, subplot=subplot)
+		pointwise=pointwise, ci=ci, pv=pv, showss=showss, ylimit=ylimit, 
+		which=which, noyscale=noyscale, at=at, subplot=subplot)
 }
 
 analyze.KM.stepp <- function ( coltrt, coltime, colcens, colvar, trts, patspop, minpatspop, 

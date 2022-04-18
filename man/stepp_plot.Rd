@@ -24,8 +24,8 @@
   stepp_plot(x, legendy = 30, pline = -2.5, color = c("red", "black"), 
     ylabel= "Specify Timepoint & Endpoint", xlabel="Subpopulations by Median Covariate", 
     ncex = 0.7, tlegend=c("Specify 1st Treatment", "Specify 2nd Treatment"), 
-    nlas = 0, alpha = 0.05, pointwise = FALSE, diff = TRUE, ci = TRUE, pv = TRUE, 
-    showss = TRUE, ylimit=c(0,100,-100,100,0,3), dev="", together=FALSE, 
+    nlas = 0, alpha = 0.05, pointwise = FALSE, ci = TRUE, pv = TRUE, 
+    showss = TRUE, ylimit=c(0,100,-100,100,0,3), which="", 
     noyscale=FALSE, at=NA, subplot=FALSE) 
 }
 
@@ -41,13 +41,11 @@
   \item{nlas}{optional - specify the las paramter (0,1,2,3) to determine the orientation of the sample size annotation; default is 0}
   \item{alpha}{optional - specify the significance level; default is 0.05}
   \item{pointwise}{optional - specify pointwise confidence intervals (pointwise=TRUE), or confidence bands; default is FALSE}
-  \item{diff}{optional - specify if you want just the first plot; default is TRUE (all three plots)}
   \item{ci}{optional - specify if you want to display the conf. interval or band; default is TRUE}
   \item{pv}{optional - pvalue will be displayed in the plots; FALSE: pvalue will not be displayed in the plots; default is TRUE}
   \item{showss}{optional - specify the label for the x-axisoptional - show the sample size; FALSE: sample size will not be shown in the plots; default is TRUE}
   \item{ylimit}{optional - pvalue will be displayed in the plots; FALSE: pvalue will not be displayed in the plots; default is TRUE}
-  \item{dev}{optional - output device control. Output the plots to the specified output format. postscript for .ps; eps (encapsulated postscript) for .eps; pdf for .pdf; png for .png; bmp for .bmp; tiff for .tif and jpeg for .jpeg. The filenames are always SteppPlot1, SteppPlot2 and SteppPlot3 in the R working directory; default is ""}
-  \item{together}{optional - output the plots to a single file instead of 3 separate files; default is FALSE}
+  \item{which}{optional - if a subset of the plots is required, specify a subset of the numbers 1:3, which is the default}
   \item{noyscale}{optional - do not scale to the y-axis; default is FALSE}
   \item{at}{optional - specify the horizontal position of the p-value; use together with pline; default is at the minimal value of x}
   \item{subplot}{optional - generate a subpopulation distribution subplot on top of the first STEPP plot; default is FALSE (no subplot)}
@@ -55,26 +53,19 @@
 
 \details{
   This is the function to generate three stepp plots for user to explore treatment-covariate 
-  interactions in various models data arising from two treatment arms of a clinical trial. The output is 
-  usually directed to the R console output and will appear in separate windows.  You can also direct the plots to 
-  various files in different formats: postscript for .ps; eps (encapsulated postscript) for .eps; pdf for .pdf;
-  png for .png;  bmp for .bmp; tiff for .tif and jpeg for .jpeg through the use of the dev parameter. The 
-  filenames are always SteppPlot1, SteppPlot2 and SteppPlot3 in the R working directory.  You can also direct
-  the plots to one file only by setting the together parameter to TRUE.
+  interactions in various models data arising from two treatment arms of a clinical trial. You can choose
+  to produce a single figure with all the three plots or only a subset of these through the use of the `which' argument.
 
   Through these plots, the user can examine the differences in effects (either in absolute or relative scale)
-  with respect to each subpopulation.  
+  with respect to each subpopulation.
 
   This is mainly a graphics function.  The STEPP analysis is done.  Most of the parameters are for
   graphics control so that one can customize the plots for presentation purposes.
-
 }
-
 
 \author{
  Wai-ki Yip, David Zahrieh, Marco Bonetti, Bernard Cole, Ann Lazar, Richard Gelber
 }
-
 
 \section{Warning }{
   This function together with other old functions will be depreciated in the future.  A new set of S4 classes are
@@ -84,10 +75,9 @@
 \seealso{
   The S4 classes: stwin, stsubpop, stmodelKM, stmodelCI, stmodelCOX, stmodelGLM, and steppes.
 
-  Old functions to be deprecated: stepp, stepp_summary, stepp_print, analyze.KM.stepp and analyze.CumInc.stepp. 
-
+  Old functions to be deprecated: stepp, stepp_summary, stepp_print, analyze.KM.stepp and analyze.CumInc.stepp.
 }
 
 \examples{
-# see example in the documentation for the function stepp.
+  # see example in the documentation for the function stepp.
 }
