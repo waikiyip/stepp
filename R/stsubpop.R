@@ -221,31 +221,25 @@ generate.all <- function(sp, win, covariate, coltype = NULL, coltrt = NULL, trts
   }
 
   medians <- rep(0,  nsubpop)
-  minz    <- rep(NA, nsubpop)
   minc    <- rep(NA, nsubpop)
-  maxz    <- rep(NA, nsubpop)
   maxc    <- rep(NA, nsubpop)
   npats   <- length(covariate)
   subpop  <- matrix(rep(0, (npats*nsubpop)), ncol = nsubpop)
   for (i in 1:nsubpop) {
     subpop[, i] <- (covariate >= zvals[I0[i]]) * (covariate <= zvals[I1[i]])
     medians[i]  <- round((median(covariate[subpop[, i] == 1])), digits = 2)
-    minz[i]     <- round(zvals[I0[i]], digits = 4)
     minc[i]     <- zvals[I0[i]]
-    maxz[i]     <- round(zvals[I1[i]], digits = 4)
     maxc[i]     <- zvals[I1[i]]
   }
 
   # update the object
   sp@win <- win
-  sp@colvar <- covariate
+  sp@covar <- covariate
   sp@nsubpop <- nsubpop
   sp@subpop <- subpop
   sp@npatsub <- npatsub
   sp@medianz <- medians
-  sp@minz <- minz
   sp@minc <- minc
-  sp@maxz <- maxz
   sp@maxc <- maxc
   if (sp@win@type == "sliding_events") {
     sp@neventsubTrt0 <- neventsubTrt0
@@ -262,13 +256,11 @@ generate.all <- function(sp, win, covariate, coltype = NULL, coltrt = NULL, trts
 setClass("stsubpop",
   representation(
     win      = "stwin",   # stepp window object
-    colvar   = "numeric", # vector of covariate of interest (V) 
+    covar   = "numeric", # vector of covariate of interest (V) 
     nsubpop  = "numeric", # number of subpopulation generated
     subpop   = "ANY",     # matrix of subpopulations
     npatsub  = "numeric", # count of each subpopulation
     medianz  = "numeric", # median of V for each subpopulation
-    minz     = "numeric", # minimum of V for each subpopulation, round to 4 digits
-    maxz     = "numeric", # maximum of V for each subpopulation, round to 4 digits
     minc     = "numeric", # minimum of V for each subpopulation, actual
     maxc     = "numeric", # maximum of V for each subpopulation, actual
     neventsubTrt0 = "null_or_numeric",
@@ -286,7 +278,7 @@ setMethod("initialize", "stsubpop",
 
 setValidity("stsubpop", 
   function(object) {
-    if (!is.numeric(object@colvar) || length(object@colvar) < object@win@r2) {
+    if (!is.numeric(object@covar) || length(object@covar) < object@win@r2) {
       print("Invalid argument.")
       return (FALSE)
     }
@@ -342,30 +334,24 @@ setMethod("merge",
       }
 
       medianz <- rep(0, nsubpop.new)
-      minz    <- rep(0, nsubpop.new)
       minc    <- rep(0, nsubpop.new)
-      maxz    <- rep(0, nsubpop.new)
       maxc    <- rep(0, nsubpop.new)
 
-      covariate <- .Object@colvar
+      covariate <- .Object@covar
       for (i in 1:nsubpop.new) {
         subpop.cov <- covariate[subpop.matrix[, i] == 1]
         medianz[i] <- round((median(subpop.cov)), digits = 2)
         minc[i]    <- min(subpop.cov)
-        minz[i]    <- round(minc[i],digits=4)
         maxc[i]    <- max(subpop.cov)
-        maxz[i]    <- round(maxc[i],digits=4)
       }
 
       subp.new@win     <- .Object@win
-      subp.new@colvar  <- .Object@colvar
+      subp.new@covar  <- .Object@covar
       subp.new@nsubpop <- nsubpop.new
       subp.new@npatsub <- apply(subpop.matrix,2,sum)
       subp.new@subpop  <- subpop.matrix
       subp.new@medianz <- medianz
-      subp.new@minz    <- minz
       subp.new@minc    <- minc
-      subp.new@maxz    <- maxz
       subp.new@maxc    <- maxc
       subp.new@neventsubTrt0 <- .Object@neventsubTrt0
       subp.new@neventsubTrt1 <- .Object@neventsubTrt1
@@ -384,7 +370,7 @@ setMethod("edge",
     if (side=="L" & j ==1) stop("invalid arg j.")
 
     # sort the covariate value
-    covariate <- .Object@colvar
+    covariate <- .Object@covar
     Z <- sort(covariate)
     ZU <- unique(Z)
 
@@ -409,9 +395,7 @@ setMethod("edge",
     # create a special stepp subpopulation just for this edge
     subpop.matrix <- matrix(rep(0, (length(covariate) * n)), ncol = n)
     medianz <- rep(0, n)
-    minz    <- rep(0, n)
     minc    <- rep(0, n)
-    maxz    <- rep(0, n)
     maxc    <- rep(0, n)
 
     # print(paste(side, "j=",j, "start=",start, "n=",n,ZU[start], ZU[start+n-1]))
@@ -424,21 +408,17 @@ setMethod("edge",
       subpop.cov <- covariate[subpop.matrix[, i] == 1]
       medianz[i] <- round((median(subpop.cov)), digits = 2)
       minc[i]    <- min(subpop.cov)
-      minz[i]    <- round(minc[i],digits=4)
       maxc[i]    <- max(subpop.cov)
-      maxz[i]    <- round(maxc[i],digits=4)
     }
 
     subp.new         <- new("stsubpop")
     subp.new@win     <- .Object@win
-    subp.new@colvar  <- .Object@colvar
+    subp.new@covar  <- .Object@covar
     subp.new@nsubpop <- n
     subp.new@subpop  <- subpop.matrix
     subp.new@npatsub <- apply(subpop.matrix,2,sum)
     subp.new@medianz <- medianz
-    subp.new@minz    <- minz
     subp.new@minc    <- minc
-    subp.new@maxz    <- maxz
     subp.new@maxc    <- maxc
     subp.new@neventsubTrt0 <- .Object@neventsubTrt0
     subp.new@neventsubTrt1 <- .Object@neventsubTrt1
@@ -458,8 +438,8 @@ setMethod("summary",
         cat("\n")
         write("Subpopulation summary information", file = "")
         nper <- apply(object@subpop, 2, sum)
-        temp <- matrix(c(1:object@nsubpop, object@medianz, object@minz, object@maxz, nper,
-          object@neventsubTrt0, object@neventsubTrt1), ncol = 7)
+        temp <- matrix(c(1:object@nsubpop, object@medianz, round(object@minc, digits = 4),
+          round(object@maxc, digits = 4), nper, object@neventsubTrt0, object@neventsubTrt1), ncol = 7)
         write("                         Covariate Summary               Sample        Type 1 Events", file = "")
         write(" Subpopulation    Median      Minimum      Maximum         Size  Trt Group 1   Trt Group 2", file = "")
         for (i in 1:object@nsubpop) {
@@ -473,7 +453,8 @@ setMethod("summary",
         cat("\n")
         write("Subpopulation summary information (including all treatments)", file = "")
         nper <- apply(object@subpop, 2 ,sum)
-        temp <- matrix(c(1:object@nsubpop, object@medianz, object@minz, object@maxz, nper), ncol = 5)
+        temp <- matrix(c(1:object@nsubpop, object@medianz, round(object@minc, digits = 4),
+          round(object@maxc, digits = 4), nper), ncol = 5)
         write("                                  Covariate Summary                 Sample", file = "")
         write("     Subpopulation        Median       Minimum       Maximum          size", file = "")
         for (i in 1:object@nsubpop) {

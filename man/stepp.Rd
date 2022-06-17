@@ -21,7 +21,7 @@
 }
 
 \usage{
-  stepp(trttype, coltrt, coltime, colcens=0, coltype=0, colvar, trts, 
+  stepp(trttype, coltrt, coltime, colcens=0, coltype=0, covar, trts, 
         patspop, minpatspop, timest, noperm)
 }
 
@@ -32,7 +32,7 @@
   \item{colcens}{the censoring variable. If specified, the KM method will be used}
   \item{coltype}{variable with distinct codes for different causes of failure where coltype=0 for censored observations; 
         coltype=1 for event of interest; coltype=2 for other causes of failure. If specified, the cumulative incidence method will be used.}
-  \item{colvar}{the covariate of interest}
+  \item{covar}{the covariate of interest}
   \item{trts}{a vector containing the codes for the 2 treatment arms, 1st and 2nd treatment arms, respectively}
   \item{patspop}{larger parameter(r2) for subpopulation construction that determines how many patients are in each subpopulation}
   \item{minpatspop}{smaller parameter(r1) for subpopulation construction that determines the largest number of patients in common among consecutive subpopulations}
@@ -103,7 +103,7 @@
 
   A few tips to keep in mind:
 
-  The variables coltrt, coltime, coltype, and colvar must be numeric. No formatting allowed.
+  The variables coltrt, coltime, coltype, and covar must be numeric. No formatting allowed.
 
   If you receive the error "Error in solve.default(sigma): system is computationally singular; reciprocal condition number = 0" then we recommend changing the seed by re-running stepp. If this error persists after several runs, then the program cannot provide reliable results. Please try modifying your choices of the two parameters minpatspop(r1) and patspop(r2) that define the subpopulation.
 
@@ -161,7 +161,7 @@ type[(t2 < t0)&(t2 < t1)] <- 2
 # to finish in a short amount of time.  IT IS RECOMMEND TO USE AT LEAST 2500 PERMUTATIONS TO 
 # PROVIDE STABLE RESULTS.
 steppCI <- stepp("CI", coltrt=Txassign, trts=c(0,1), coltime=time, coltype=type, 
-  colvar=covariate, patspop=300, minpatspop=200, timest=1.0, noperm=0)
+  covar=covariate, patspop=300, minpatspop=200, timest=1.0, noperm=0)
 
 stepp_summary(steppCI)
 stepp_print(steppCI)

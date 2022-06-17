@@ -15,7 +15,7 @@ cov     <- bigKM$ki67
 # set.seed(101)
 # noperm <- 100
 # res_old <- STEPPpermCI2(coltrt = rxgroup, coltime = time, coltype = evt,
-#   colvar = cov, trts = c(1, 2), eventpops = 20, mineventpops = 10,
+#   covar = cov, trts = c(1, 2), eventpops = 20, mineventpops = 10,
 #   timest = 4, noperm = noperm, minRequiredSubpops = 5, legendy = 30,
 #   pline = -2.5, color = c("red", "black"), ylabel = "4 year DFS",
 #   xlabel = "Subpopulations by Median Ki-67", ncex = 0.7,
@@ -91,7 +91,7 @@ type[(t1 < t0)&(t1 < t2)] <- 1
 type[(t2 < t0)&(t2 < t1)] <- 2 
  
 ## the following code performs the calculations using the steppevent package
-# STEPPpermCI2(coltrt = Txassign, coltime = time, coltype = type, colvar = covariate, trts = c(0, 1),
+# STEPPpermCI2(coltrt = Txassign, coltime = time, coltype = type, covar = covariate, trts = c(0, 1),
 #   eventpops = 20, mineventpops = 10, timest = 1, noperm = 250, minRequiredSubpops = 5, legendy = 30,
 #   pline = -2.5, color = c("red", "black"), ylabel = "PFS",
 #   xlabel = "Subpopulations by Median Continuous Variable", ncex = 0.7,
@@ -338,6 +338,6 @@ time    <- bigKM$time
 evt     <- bigKM$event
 cov     <- bigKM$ki67
 
-res <- balance_patients(range_r1 = c(30, 100), range_r2 = c(50, 300),
+res <- balance_patients(range.r1 = c(30, 100), range.r2 = c(50, 300),
                         maxnsubpops = 100, covar = cov, verbose = TRUE,
                         plot = TRUE, contour = FALSE)

@@ -27,8 +27,8 @@
 	effect estimates of each subpopulation in absolute and relative scales \cr
 	list return from the estimate methods of various stepp models \cr
 	see documentation in various stepp models for details on what is in the list}
-    \item{\code{result}:}{Object of class \code{"ANY"} \cr
-	permutation and gee test results and various covariance matrices \cr
+    \item{\code{testresults}:}{Object of class \code{"ANY"} \cr
+	permutation or GEE test results and various covariance matrices \cr
 	list return from the test methods of various stepp models \cr
 	see documentation in various stepp models for details on what is in the list}
     \item{\code{nperm}:}{Object of class \code{"numeric"} \cr
@@ -55,9 +55,9 @@
 }
 
 \note{
-  The plot function for steppes class generates 3 plots at once.  If you are using R studio for development, 
-  you can only get the last plot as R studio only allows one graphical device.  There is a simple workaround.
-  By writing the plots to pdf files in your working directory, you can display them outside of R studio. 
+  The plot function for steppes class generates 3 plots at once. If you are using R studio for development, 
+  you can only get the last plot as R studio only allows one graphical device. There is a simple workaround.
+  By writing the plots to pdf files in your working directory, you can display them outside of R studio.
 }
 
 \author{

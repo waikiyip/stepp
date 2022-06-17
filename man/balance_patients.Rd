@@ -12,13 +12,13 @@
 }
 
 \usage{
-  balance_patients(range_r1, range_r2, maxnsubpops, covar, verbose = FALSE,
+  balance_patients(range.r1, range.r2, maxnsubpops, covar, verbose = FALSE,
     plot = FALSE, contour = FALSE, nlevels = 5, showstatus = TRUE)
 }
 
 \arguments{
-  \item{range_r1}{numeric vector with two elements providing the range of values for the r1 parameter}
-  \item{range_r2}{numeric vector with two elements providing the range of values for the r2 parameter}
+  \item{range.r1}{numeric vector with two elements providing the range of values for the r1 parameter}
+  \item{range.r2}{numeric vector with two elements providing the range of values for the r2 parameter}
   \item{maxnsubpops}{length-one numeric vector providing the maximum number of subpopulations to consider}
   \item{covar}{numeric vector containing the covariate values to use for generating the subpopulations}
   \item{verbose}{length-one logical vector; if \code{TRUE} prints a summary of the results in the console}

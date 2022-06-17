@@ -10,14 +10,14 @@ setClass("steppes",
     subpop   = "stsubpop",  # stepp subpopulation
     model    = "stmodel", # stepp model
     effect   = "ANY",   # list of absolute effect est
-    result   = "ANY",   # test statistics
+    testresults   = "ANY",   # test statistics
     nperm    = "numeric"  # number of permutations 0-n
   ),
   prototype = c(NULL, NULL, NULL, NULL, NULL, NULL)
 )
 
 setMethod("initialize", "steppes",
-  function(.Object, subpop, model, effect, result, nperm, ...) {
+  function(.Object, subpop, model, effect, testresults, nperm, ...) {
     if (missing(subpop)) {
       subpop <- new("stsubpop")
     }
@@ -27,8 +27,8 @@ setMethod("initialize", "steppes",
     if (missing(effect)) {
       effect <- NULL
     }
-    if (missing(result)) {
-      result <- NULL
+    if (missing(testresults)) {
+      testresults <- NULL
     }
     if (missing(nperm)) {
       nperm <- 0
@@ -36,7 +36,7 @@ setMethod("initialize", "steppes",
     .Object@subpop <- subpop
     .Object@model <- model
     .Object@effect <- effect
-    .Object@result <- result
+    .Object@testresults <- testresults
     .Object@nperm <- nperm
     if (!validObject(.Object)) stop("")
     callNextMethod(.Object, ...)
@@ -72,7 +72,7 @@ setMethod("test",
     else {
       if (length(.Object@model@trts) == 1) nperm <- 0
       .Object@nperm  <- nperm
-      .Object@result <- test(.Object@model, nperm, .Object@subpop, .Object@effect, showstatus = showstatus)
+      .Object@testresults <- test(.Object@model, nperm, .Object@subpop, .Object@effect, showstatus = showstatus)
     }
     return(.Object)
   }
@@ -142,8 +142,8 @@ setMethod("cutpoint",
       print(cv)
     }
     if (sum(mv) == 0){
-      if (side == "L") cp <- .Object@subpop@maxz[length(mv)]
-      else cp <- .Object@subpop@minz[1]
+      if (side == "L") cp <- round(.Object@subpop@maxc[length(mv)], digits = 4)
+      else cp <- round(.Object@subpop@minc[1], digits = 4)
     } 
     else {
       if (side == "L") cutpoint.index <- which(mv)[1]
@@ -268,7 +268,7 @@ setMethod("edge.boot",
       if (showstatus) setTxtProgressBar(pb, i)
 
       # create the subpopulation
-      subpop.i <- stepp.subpop(ori.subpop@win, ori.subpop@colvar[bmatrix[,i]])
+      subpop.i <- stepp.subpop(ori.subpop@win, ori.subpop@covar[bmatrix[,i]])
 
       # call to create a new model
       model.i  <- subgroup(.Object@model, bmatrix[,i])
@@ -338,7 +338,7 @@ setMethod("summary",
     if (object@subpop@init) {
       subpop   <- object@subpop
       nsubpop  <- subpop@nsubpop
-      colvar   <- subpop@colvar
+      covar   <- subpop@covar
       minc     <- subpop@minc
       maxc     <- subpop@maxc
     
@@ -357,7 +357,7 @@ setMethod("summary",
       for (i in 1:nsubpop) {
         trtj <- rep(0, ntrts)
         for (j in 1:ntrts) {
-          subpopj <- colvar[colvar >= minc[i] & colvar <= maxc[i] & txassign == j]
+          subpopj <- covar[covar >= minc[i] & covar <= maxc[i] & txassign == j]
           trtj[j] <- trtj[j] + length(subpopj)
         }
         subtrt <- paste(format(trtj,width=8),sep="",collapse="")
@@ -402,24 +402,22 @@ setMethod("print",
   nlas, alpha, pointwise, ci, pv, showss, ylimit, which, noyscale, rug,
   lsty, marker, subset, subplot, legend_diff, ...) {
 
-  Result        <- x@result$Res
+  Result        <- x@testresults$Res
   nperm         <- x@nperm
   TrtEff        <- x@effect$TrtEff
   Ratios        <- x@effect$Ratios
   nsubpop       <- x@subpop@nsubpop
   npatsub       <- x@subpop@npatsub
   medians       <- x@subpop@medianz
-  minz          <- x@subpop@minz
   minc          <- x@subpop@minc
-  maxz          <- x@subpop@maxz
   maxc          <- x@subpop@maxc
-  colvar        <- x@subpop@colvar
+  covar         <- x@subpop@covar
   r1            <- x@subpop@win@r1
   r2            <- x@subpop@win@r2
   coltrt        <- x@model@coltrt
   trts          <- x@model@trts
   issinglegroup <- (x@effect$ntrts == 1)
-
+  
   # checks
   if (!is.numeric(which) || any(which < 1) || any(which > 3)) {
     stop("'which' must be in 1:3")
@@ -457,7 +455,7 @@ setMethod("print",
     stop()
   }
   n <- length(which)
-  if (class(x@model) == "stmodelGLM") noyscale <- TRUE
+  if (is(x@model, "stmodelGLM")) noyscale <- TRUE
   if (subset[1] == 1 & sum(subset) == 1) n <- 1
 
   ssize <- rep(" ", nsubpop)
@@ -466,7 +464,7 @@ setMethod("print",
   for (i in 1:nsubpop) {
     trtj <- rep(0, ntrts)
     for (j in 1:ntrts) {
-      subpopj <- colvar[colvar >= minc[i] & colvar <= maxc[i] & txassign == j]
+      subpopj <- covar[covar >= minc[i] & covar <= maxc[i] & txassign == j]
       trtj[j] <- trtj[j] + sum(!is.na(subpopj))
     }
     tpatsub[i] <- sum(trtj)
@@ -723,18 +721,18 @@ setMethod("print",
         }
       }
 
-      if (class(x@model) != "stmodelGLM") {
-        # Rpvalue <- x@result$HRpvalue
+      if (!is(x@model, "stmodelGLM")) {
+        # Rpvalue <- x@testresults$HRpvalue
         # logR <- x@effect$logHR
         # logRSE <- x@effect$logHRSE
         text1 <- "Supremum HR p-value = "
-        if (class(x@model) == "stmodelCI") {
+        if (is(x@model, "stmodelCI")) {
           text2 <- "Subdistribution Hazard Ratio"
         } else {
           text2  <- "Hazard Ratio"
         }
       } else {
-        # Rpvalue <- x@result$logRpvalue
+        # Rpvalue <- x@testresults$logRpvalue
         # logR <- x@effect$logR
         # logRSE <- x@effect$logRSE
         if (x@model@glm == "gaussian") {
@@ -837,7 +835,7 @@ plot.steppes <- function(x, y, legendy = 30, pline = -2.5, color = c("red", "bla
   ncex = 0.7, tlegend = c("Specify 1st Treatment", "Specify 2nd Treatment"),
   nlas = 0, alpha = 0.05, pointwise = FALSE, ci = TRUE,
   pv = TRUE, showss = TRUE, ylimit = c(0,100,-100,100,0,3), which = c(1, 2, 3),
-  noyscale = FALSE, rug = FALSE, at = NA, subplot=FALSE, ...) {
+  noyscale = FALSE, rug = FALSE, at = NA, subplot = FALSE, legend_diff = 1, ...) {
   return(.Stepp.plot(x, y, legendy, pline, at, color, ylabel, xlabel, ncex, tlegend,
     nlas, alpha, pointwise, ci, pv, showss, ylimit, which,
     noyscale, rug, subplot, legend_diff, ...))

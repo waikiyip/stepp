@@ -7,30 +7,30 @@
 #############################
 # These calls are maintained by backward compatibility reasons:
 #
-stepp <- function(trttype, coltrt, coltime, colcens=0, coltype=0, colvar, trts, 
+stepp <- function(trttype, coltrt, coltime, colcens=0, coltype=0, covar, trts, 
 			 patspop, minpatspop, timest, noperm) {
   win.stepp    <- new("stwin", type="sliding", r1=minpatspop, r2=patspop)
   subp.stepp   <- new("stsubpop")
 
   if (trttype == "KM") {
-    indata  <- cbind(coltrt, coltime, colcens, colvar)
+    indata  <- cbind(coltrt, coltime, colcens, covar)
     indata  <- indata[apply(indata, 1, function(x) !any(is.na(x))), 
         , drop = FALSE]
     coltrt  <- indata[, 1]
     coltime <- indata[, 2]
     colcens <- indata[, 3]
-    colvar  <- indata[, 4]
+    covar  <- indata[, 4]
 
     mod.stepp  <- new("stmodelKM", coltrt=coltrt, survTime=coltime, censor=colcens, 
 				trts=trts, timePoint=timest)
   } else if (trttype == "CI") {
-    indata  <- cbind(coltrt, coltime, coltype, colvar)
+    indata  <- cbind(coltrt, coltime, coltype, covar)
     indata  <- indata[apply(indata, 1, function(x) !any(is.na(x))), 
         , drop = FALSE]
     coltrt  <- indata[, 1]
     coltime <- indata[, 2]
     coltype <- indata[, 3]
-    colvar  <- indata[, 4]
+    covar  <- indata[, 4]
 
     mod.stepp  <- new("stmodelCI", coltrt=coltrt, coltime=coltime, coltype=coltype, 
 				trts=trts, timePoint=timest)
@@ -38,7 +38,7 @@ stepp <- function(trttype, coltrt, coltime, colcens=0, coltype=0, colvar, trts,
     stop("Treatment type can only be KM or CI !")
   }
 
-  subp.stepp   <- generate(subp.stepp, win=win.stepp, covariate=colvar)
+  subp.stepp   <- generate(subp.stepp, win=win.stepp, covariate=covar)
 
   result.stepp <- new("steppes")
   result.stepp <- estimate(result.stepp, subp.stepp, mod.stepp)
@@ -59,21 +59,21 @@ stepp_plot <- function(x, legendy = 30, pline = -2.5, color = c("red", "black"),
 	ylabel= "Specify Timepoint & Endpoint", xlabel="Subpopulations by Median Covariate",
 	ncex = 0.7, tlegend=c("Specify 1st Treatment", "Specify 2nd Treatment"), 
 	nlas = 0, alpha = 0.05, pointwise = FALSE, ci = TRUE, pv = TRUE, 
-	showss = TRUE, ylimit=c(0,100,-100,100,0,3), which="", noyscale=FALSE, at=NA, subplot=FALSE) {
+	showss = TRUE, ylimit=c(0,100,-100,100,0,3), which=c(1, 2, 3), noyscale=FALSE, at=NA, subplot=FALSE) {
   plot(x, legendy=legendy, pline=pline, color=color,
 		ylabel=ylabel, xlabel=xlabel, ncex=ncex, tlegend=tlegend, nlas=nlas, alpha=alpha, 
 		pointwise=pointwise, ci=ci, pv=pv, showss=showss, ylimit=ylimit, 
 		which=which, noyscale=noyscale, at=at, subplot=subplot)
 }
 
-analyze.KM.stepp <- function ( coltrt, coltime, colcens, colvar, trts, patspop, minpatspop, 
+analyze.KM.stepp <- function(coltrt, coltime, colcens, covar, trts, patspop, minpatspop, 
 				timest, noperm=2500,
 			 	ncex = 0.70, legendy = 30, pline = -2.5, color = c("red", "black"),
 			 	xlabel="Subpopulations by Median Covariate",
 			 	ylabel = "?-year Disease-Free Survival", 
 			 	tlegend = c("1st Treatment", "2nd Treatment"),
 			 	nlas = 3, pointwise=FALSE) {
-  stepp.KM <- stepp("KM", coltrt=coltrt, coltime=coltime, colcens=colcens, colvar=colvar,
+  stepp.KM <- stepp("KM", coltrt=coltrt, coltime=coltime, colcens=colcens, covar=covar,
 			  trts=trts, patspop=patspop, minpatspop=minpatspop, timest=timest, noperm=noperm)
   stepp_summary(stepp.KM)
   stepp_print(stepp.KM)
@@ -83,14 +83,14 @@ analyze.KM.stepp <- function ( coltrt, coltime, colcens, colvar, trts, patspop, 
   return(stepp.KM)
 }
 
-analyze.CumInc.stepp <- function(coltrt, coltime, coltype, colvar, trts, patspop, minpatspop, 
+analyze.CumInc.stepp <- function(coltrt, coltime, coltype, covar, trts, patspop, minpatspop, 
     				timest, noperm=2500,
 				ncex = 0.7, legendy = 30, pline = -2.5, color = c("red", "black"),
     				xlabel = "Subpopulations by Median Covariate",
 				ylabel = "?-year Disease-Free Survival", 
     				tlegend = c("1st Treatment", "2nd Treatment"), 
    				nlas = 3, pointwise = FALSE) {
-  stepp.CI <- stepp("CI", coltrt=coltrt, coltime=coltime, coltype=coltype, colvar=colvar,
+  stepp.CI <- stepp("CI", coltrt=coltrt, coltime=coltime, coltype=coltype, covar=covar,
 			  trts=trts, patspop=patspop, minpatspop=minpatspop, timest=timest, noperm=noperm)
   stepp_summary(stepp.CI)
   stepp_print(stepp.CI)

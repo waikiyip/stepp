@@ -544,28 +544,28 @@ print.estimate.CI <- function(x, timePoint, trts) {
 }
 
 print.cov.CI <- function(stobj, timePoint, trts) {
-  if (!is.null(stobj@result)) {
-    for (j in 1:(stobj@result$ntrts - 1)) {
+  if (!is.null(stobj@testresults)) {
+    for (j in 1:(stobj@testresults$ntrts - 1)) {
       ns <- stobj@subpop@nsubpop
       if (stobj@subpop@win@type == "tail-oriented") ns <- ns-1
       # cat("\n")
       write(paste("The covariance matrix of the cumulative incidence differences at", 
         timePoint, "time units for the", ns, "subpopulations is:"), file = "")
       write(paste("trt ", trts[1], "vs. trt", trts[j + 1]), file = "")
-      print(stobj@result$Res[[j]]$sigma)
+      print(stobj@testresults$Res[[j]]$sigma)
 
       cat("\n")
       write(paste("The covariance matrix of the log hazard ratios for the", ns, "subpopulations is:"), file = "")
-      print(stobj@result$Res[[j]]$HRsigma)
+      print(stobj@testresults$Res[[j]]$HRsigma)
       cat("\n")
     }
   }
 }
 
 print.stat.CI <- function(stobj, trts) {
-  if (!is.null(stobj@result)) {
-    for (j in 1:(stobj@result$ntrts - 1)) {
-      t <- stobj@result$Res[[j]]
+  if (!is.null(stobj@testresults)) {
+    for (j in 1:(stobj@testresults$ntrts - 1)) {
+      t <- stobj@testresults$Res[[j]]
       # cat("\n")
       write(paste("Supremum test results"), file = "")
       write(paste("trt", trts[1], "vs. trt", trts[j + 1]), file = "")
