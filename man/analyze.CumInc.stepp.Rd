@@ -13,11 +13,9 @@
   from two treatment arms of a clinical trial. A permutation distribution approach to inference 
   is implemented that permutes covariate values within a treatment group. 
   The statistical significance of observed heterogeneity of treatment effects is calculated using 
-  permutation tests:\cr\cr
-  1) for the maximum difference between each subpopulation effect and the overall population 
-     treatment effect or supremum based test statistic; \cr
-  2) for the difference between each subpopulation effect and the overall population treatment 
-     effect, which resembles the chi-square statistic. 
+  permutation tests: 1) for the maximum difference between each subpopulation effect and the overall
+  population treatment effect or supremum based test statistic; 2) for the difference between each
+  subpopulation effect and the overall population treatment effect, which resembles the chi-square statistic. 
 }
 
 \usage{
@@ -63,8 +61,7 @@
   One can explore the window parameters without invoking the permutation analysis by setting noperm 
   to 0.  In that case, pvalue and the covarance matrix will not be available.
 
-  We acknowledge Robert J. Gray for permitting us to use the cmprsk package. 
-
+  We acknowledge Robert J. Gray for permitting us to use the cmprsk package.
 }
 
 \value{
