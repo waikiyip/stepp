@@ -997,30 +997,30 @@ print.estimate.GLM <- function(x, family, trts){
 }
 
 print.cov.GLM <- function(stobj, trts) {
-  if (!is.null(stobj@result)) {
-    for (j in 1:(stobj@result$ntrts - 1)) {
+  if (!is.null(stobj@testresults)) {
+    for (j in 1:(stobj@testresults$ntrts - 1)) {
       ns <- stobj@subpop@nsubpop
       if (stobj@subpop@win@type == "tail-oriented") ns <- ns - 1
       # cat("\n")
       write(paste("The covariance matrix of the effect differences estimates for the",
         ns, "subpopulations is:"), file = "")
       write(paste("trt ", trts[1], "vs. trt", trts[j + 1]), file = "")
-      print(stobj@result$Res[[j]]$sigma)
+      print(stobj@testresults$Res[[j]]$sigma)
 
       cat("\n")
       write(paste("The covariance matrix of the log effect ratios for the", 
         ns, "subpopulations is:"), file = "")
-      print(stobj@result$Res[[j]]$HRsigma)
+      print(stobj@testresults$Res[[j]]$HRsigma)
       cat("\n")
     }
   }
 }
 
 print.stat.GLM <- function(stobj, trts) {
-  if (!is.null(stobj@result)) {
-    for (j in 1:(stobj@result$ntrts-1)) {
+  if (!is.null(stobj@testresults)) {
+    for (j in 1:(stobj@testresults$ntrts-1)) {
 
-      t <- stobj@result$Res[[j]]
+      t <- stobj@testresults$Res[[j]]
       # cat("\n")
       write(paste("Supremum test results"), file = "")
       write(paste("trt", trts[1], "vs. trt", trts[j + 1]), file = "")
@@ -1046,7 +1046,7 @@ setMethod("print",
       print.estimate.GLM(stobj, x@glm, x@trts)
     }
 
-    if (!is.null(stobj@result)) {
+    if (!is.null(stobj@testresults)) {
       #
       #   2. covariance matrices
       #

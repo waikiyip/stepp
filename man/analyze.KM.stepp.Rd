@@ -23,7 +23,7 @@
 }
 
 \usage{
-  analyze.KM.stepp(coltrt, coltime, colcens, colvar, trts, patspop, minpatspop, 
+  analyze.KM.stepp(coltrt, coltime, colcens, covar, trts, patspop, minpatspop, 
     timest, noperm=2500, ncex = 0.7, legendy = 30, pline = -2.5, 
     color = c("red", "black"),
     xlabel = "Subpopulations by Median Covariate", 
@@ -36,7 +36,7 @@
   \item{coltrt}{the treatment variable}
   \item{coltime}{the time to event variable}
   \item{colcens}{the censoring variable}
-  \item{colvar}{the covariate of interest}
+  \item{covar}{the covariate of interest}
   \item{trts}{a vector containing the codes for the 2 treatment arms, 1st and 2nd treatment arms, respectively}
   \item{patspop}{larger parameter(r2) for subpopulation construction that determines how many patients are in each subpopulation}
   \item{minpatspop}{smaller parameter(r1) for subpopulation construction that determines the largest number of patients in common among consecutive subpopulations}
@@ -116,7 +116,7 @@
 
   A few tips to keep in mind:
 
-  The variables coltrt, coltime, colcens, and colvar must be numeric. No formatting allowed.
+  The variables coltrt, coltime, colcens, and covar must be numeric. No formatting allowed.
 
   If you receive the error "Error in solve.default(sigma): system is computationally singular; reciprocal condition number = 0" then we recommend changing the seed by re-running analyze.KM.stepp. If this error persists after several runs, then the program cannot provide reliable results. Please try modifying your choices of the two parameters minpatspop(r1) and patspop(r2) that define the subpopulation.
 
@@ -169,7 +169,7 @@ for ( i in 1:N )
 # the stepp function to finish in a short amount of time.  IT IS RECOMMEND
 # TO USE AT LEAST 2500 PERMUTATIONS TO PROVIDE STABLE RESULTS.
 output <- analyze.KM.stepp ( coltrt=Txassign, coltime=time, 
-  colcens=censor, colvar=covariate, trts=c(1,2), patspop=300,
+  colcens=censor, covar=covariate, trts=c(1,2), patspop=300,
   minpatspop=200, timest=4, noperm=0, ncex=0.70, legendy=30,
   pline=-2.5, color=c("red", "black"),
   xlabel="Subpopulations by Median Age", ylabel="4-year Disease-Free Survival", 

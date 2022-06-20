@@ -15,7 +15,7 @@ cov     <- bigKM$ki67
 # set.seed(101)
 # noperm <- 100
 # res_old <- STEPPpermCI2(coltrt = rxgroup, coltime = time, coltype = evt,
-#   colvar = cov, trts = c(1, 2), eventpops = 20, mineventpops = 10,
+#   covar = cov, trts = c(1, 2), eventpops = 20, mineventpops = 10,
 #   timest = 4, noperm = noperm, minRequiredSubpops = 5, legendy = 30,
 #   pline = -2.5, color = c("red", "black"), ylabel = "4 year DFS",
 #   xlabel = "Subpopulations by Median Ki-67", ncex = 0.7,
@@ -45,19 +45,19 @@ plot(resCI_e, legendy = 50,
      tlegend = c("Letrozole", "Tamoxifen"), nlas = 3, alpha = 0.05,
      pointwise = FALSE)
 
-# estimate and test the KM model
-steppes_e <- new("steppes")
-modKM_e <- new("stmodelKM", coltrt = rxgroup, trts = c(1, 2), survTime = time,
-  censor = evt, timePoint = 4)
-resKM_e <- estimate(steppes_e, subp_e, modKM_e)
-print(resKM_e)
-set.seed(101)
-noperm <- 100
-resKM_e <- test(resKM_e, noperm)
-print(resKM_e)
-plot(resKM_e, ylabel = "4 year DFS",
-     xlabel = "Subpopulations by Median Ki-67", ncex = 0.7,
-     tlegend = c("Letrozole", "Tamoxifen"), nlas = 3, alpha = 0.05)
+# # estimate and test the KM model
+# steppes_e <- new("steppes")
+# modKM_e <- new("stmodelKM", coltrt = rxgroup, trts = c(1, 2), survTime = time,
+#   censor = evt, timePoint = 4)
+# resKM_e <- estimate(steppes_e, subp_e, modKM_e)
+# print(resKM_e)
+# set.seed(101)
+# noperm <- 100
+# resKM_e <- test(resKM_e, noperm)
+# print(resKM_e)
+# plot(resKM_e, ylabel = "4 year DFS",
+#      xlabel = "Subpopulations by Median Ki-67", ncex = 0.7,
+#      tlegend = c("Letrozole", "Tamoxifen"), nlas = 3, alpha = 0.05)
 
 ### Example 2 ###
 
@@ -91,7 +91,7 @@ type[(t1 < t0)&(t1 < t2)] <- 1
 type[(t2 < t0)&(t2 < t1)] <- 2 
  
 ## the following code performs the calculations using the steppevent package
-# STEPPpermCI2(coltrt = Txassign, coltime = time, coltype = type, colvar = covariate, trts = c(0, 1),
+# STEPPpermCI2(coltrt = Txassign, coltime = time, coltype = type, covar = covariate, trts = c(0, 1),
 #   eventpops = 20, mineventpops = 10, timest = 1, noperm = 250, minRequiredSubpops = 5, legendy = 30,
 #   pline = -2.5, color = c("red", "black"), ylabel = "PFS",
 #   xlabel = "Subpopulations by Median Continuous Variable", ncex = 0.7,
@@ -130,50 +130,50 @@ maxnsubpops <- 30
 
 res_bal <- balance_patients(ranger1, ranger2, maxnsubpops, bigKM$ki67,
                             plot = TRUE, verbose = TRUE, contour = TRUE,
-                            nlevels = 6, border = TRUE)
+                            nlevels = 6)
 
-### Examples for 'tail-oriented' windows ###
-
-library(stepp)
-
-set.seed(101)
-Y <- rnorm(100)
-summary(Y)
-
-nsubpop <- 10
-tt <- gen.tailwin(Y, nsub = nsubpop, dir = "LE")
-ss <- stepp.win(type = "tail-oriented", r1 = tt$v, r2 = rep(min(Y), nsubpop))
-
-# create and generate the stepp subpopulation
-sp <- new("stsubpop")
-sp <- generate(sp, win = ss, cov = Y)
-summary(sp)
-
-# ---
-
-nsubpop <- 10
-tt <- gen.tailwin(Y, nsub = nsubpop, dir = "GE")
-ss <- stepp.win(type = "tail-oriented", r1 = rep(max(Y), nsubpop), r2 = tt$v)
-
-# create and generate the stepp subpopulation
-sp <- new("stsubpop")
-sp <- generate(sp, win = ss, cov = Y)
-summary(sp)
-
-# ---
-
-win1 <- stepp.win(type="sliding", r1=5,r2=99)
-
-# create and generate the stepp subpopulation
-sp <- new("stsubpop")
-sp <- generate(sp, win = win1, cov = Y)
-summary(sp)
-
-###
-
-# debugonce(generate, signature = "stsubpop")
-# debugonce(generate.all)
-# debug(gen.tailwin)
+# ### Examples for 'tail-oriented' windows ###
+# 
+# library(stepp)
+# 
+# set.seed(101)
+# Y <- rnorm(100)
+# summary(Y)
+# 
+# nsubpop <- 10
+# tt <- gen.tailwin(Y, nsub = nsubpop, dir = "LE")
+# ss <- stepp.win(type = "tail-oriented", r1 = tt$v, r2 = rep(min(Y), nsubpop))
+# 
+# # create and generate the stepp subpopulation
+# sp <- new("stsubpop")
+# sp <- generate(sp, win = ss, cov = Y)
+# summary(sp)
+# 
+# # ---
+# 
+# nsubpop <- 10
+# tt <- gen.tailwin(Y, nsub = nsubpop, dir = "GE")
+# ss <- stepp.win(type = "tail-oriented", r1 = rep(max(Y), nsubpop), r2 = tt$v)
+# 
+# # create and generate the stepp subpopulation
+# sp <- new("stsubpop")
+# sp <- generate(sp, win = ss, cov = Y)
+# summary(sp)
+# 
+# # ---
+# 
+# win1 <- stepp.win(type="sliding", r1=5,r2=99)
+# 
+# # create and generate the stepp subpopulation
+# sp <- new("stsubpop")
+# sp <- generate(sp, win = win1, cov = Y)
+# summary(sp)
+# 
+# ###
+# 
+# # debugonce(generate, signature = "stsubpop")
+# # debugonce(generate.all)
+# # debug(gen.tailwin)
 
 ###
 
@@ -338,6 +338,6 @@ time    <- bigKM$time
 evt     <- bigKM$event
 cov     <- bigKM$ki67
 
-res <- balance_patients(range_r1 = c(30, 100), range_r2 = c(50, 300),
+res <- balance_patients(range.r1 = c(30, 100), range.r2 = c(50, 300),
                         maxnsubpops = 100, covar = cov, verbose = TRUE,
                         plot = TRUE, contour = FALSE)

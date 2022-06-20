@@ -45,7 +45,8 @@ cov     <- bigKM$ki67
 nsubpop_tmp <- 10
 win_tmp <- gen.tailwin(cov, nsub = nsubpop_tmp, dir = "LE")
 nsubpop <- length(win_tmp$v)
-swin <- new("stwin", type = "tail-oriented", r1 = win_tmp$v, r2 = rep(min(cov), nsubpop)) # create a tail-oriented window
+# create a tail-oriented window
+swin <- new("stwin", type = "tail-oriented", r1 = win_tmp$v, r2 = rep(min(cov), nsubpop))
 subp <- new("stsubpop")                             # create subpopulation object
 subp <- generate(subp, win = swin, covariate = cov) # generate the subpopulations
 summary(subp)                             # summary of the subpopulations

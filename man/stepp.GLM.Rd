@@ -9,7 +9,7 @@
   	gaussian with identity link, binomial with logit link and Poisson with log link.
 }
 \usage{
-	stepp.GLM(coltrt, trts, colY, MM, glm)
+	stepp.GLM(coltrt, trts, colY, MM, glm, link)
 }
 
 \arguments{
@@ -20,6 +20,7 @@
 		no logical values or factors allowed\cr
 		these values need to be converted to numeric with some encoding scheme}
   \item{glm}{the glm to be used for analysis: "gaussian", "binomial", "poisson"}
+  \item{link}{the link function; reserved for future use}
 }
 
 \value{

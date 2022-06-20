@@ -17,7 +17,7 @@ Objects can be created by calls of the form \code{new("stsubpop")} or the constr
   \describe{
     \item{\code{win}:}{Object of class \code{"stwin"} \cr
 	the stepp window set up for the analysis }
-    \item{\code{colvar}:}{Object of class \code{"numeric"} \cr
+    \item{\code{covar}:}{Object of class \code{"numeric"} \cr
 	the covariate of interest }
     \item{\code{nsubpop}:}{Object of class \code{"numeric"} \cr
 	the number of subpopulations generated }
@@ -27,12 +27,8 @@ Objects can be created by calls of the form \code{new("stsubpop")} or the constr
 	a vector of size of each subpopulation }
     \item{\code{medianz}:}{Object of class \code{"numeric"} \cr
 	a vector of median value of the covariate of interest for each subpopulation }
-    \item{\code{minz}:}{Object of class \code{"numeric"} \cr
-	a vector of rounded minimum value of the covariate of interest for each subpopulation }
     \item{\code{minc}:}{Object of class \code{"numeric"} \cr
 	a vector of the minimum value of the covariate of interest for each subpopulation }
-     \item{\code{maxz}:}{Object of class \code{"numeric"} \cr
-	a vector of rounded maximum value of the covariate of interest for each subpopulation }
     \item{\code{maxc}:}{Object of class \code{"numeric"} \cr
 	a vector of the maximum value of the covariate of interest for each subpopulation }
     \item{\code{neventsubTrt0}:}{Object of class \code{"numeric"} or \code{NULL} \cr
