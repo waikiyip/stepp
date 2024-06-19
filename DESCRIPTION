@@ -2,7 +2,7 @@ Package: stepp
 Type: Package
 Title: Subpopulation Treatment Effect Pattern Plot (STEPP)
 Version: 3.2.7
-Date: 2024-05-27
+Date: 2024-06-02
 Author: Wai-ki Yip [aut, cre],
   Ann Lazar [ctb],
   David Zahrieh [ctb],
@@ -35,3 +35,4 @@ Description: A method to explore the treatment-covariate interactions in surviva
 License: GPL (>= 2)
 URL: https://www.r-project.org
 LazyLoad: yes
+
